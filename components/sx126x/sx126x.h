@@ -39,13 +39,13 @@ class SX126x : public Component,
                                      spi::DATA_RATE_8MHZ> {
  public:
   float get_setup_priority() const override { return setup_priority::PROCESSOR; }
-  void setup2();
-  void setup() override {};
+  void setup() override;
   void loop() override;
   void dump_config() override;
   void set_bandwidth(SX126xBw bandwidth) { this->bandwidth_ = bandwidth; }
   void set_bitrate(uint32_t bitrate) { this->bitrate_ = bitrate; }
   void set_bitsync(bool bitsync) { this->bitsync_ = bitsync; }
+  void set_busy_pin(InternalGPIOPin *busy_pin) { this->busy_pin_ = busy_pin; }
   void set_coding_rate(uint8_t coding_rate) { this->coding_rate_ = coding_rate; }
   void set_crc_enable(bool crc_enable) { this->crc_enable_ = crc_enable; }
   void set_deviation(uint32_t deviation) { this->deviation_ = deviation; }
@@ -79,12 +79,16 @@ class SX126x : public Component,
   void set_mode_(SX126xOpMode mode);
   void write_fifo_(const std::vector<uint8_t> &packet);
   void read_fifo_(std::vector<uint8_t> &packet);
+  void write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
+  void read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   void write_register_(uint16_t reg, uint8_t *data, uint8_t size);
   void write_register_(uint16_t reg, uint8_t data);
   void read_register_(uint16_t reg, uint8_t *data, uint8_t size);
   uint8_t read_register_(uint16_t reg);
+  void wait_busy_();
   Trigger<std::vector<uint8_t>, float, float> *packet_trigger_{new Trigger<std::vector<uint8_t>, float, float>()};
   std::vector<uint8_t> sync_value_;
+  InternalGPIOPin *busy_pin_{nullptr};
   InternalGPIOPin *dio0_pin_{nullptr};
   InternalGPIOPin *rst_pin_{nullptr};
   SX126xBw bandwidth_;

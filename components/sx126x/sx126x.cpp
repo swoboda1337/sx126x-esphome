@@ -19,8 +19,26 @@ static const uint8_t BW_FSK_OOK[22] = {RX_BW_2_6,   RX_BW_3_1,   RX_BW_3_9,   RX
                                        RX_BW_41_7,  RX_BW_50_0,  RX_BW_62_5,  RX_BW_83_3, RX_BW_100_0, RX_BW_125_0,
                                        RX_BW_166_7, RX_BW_200_0, RX_BW_250_0, RX_BW_250_0};
 
+void SX126x::read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
+  this->enable();
+  this->wait_busy_();
+  this->write_byte(opcode);
+  this->write_byte(0x00);
+  this->read_array(data, size);
+  this->disable();
+}
+
+void SX126x::write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
+  this->enable();
+  this->wait_busy_();
+  this->write_byte(opcode);
+  this->write_array(data, size);
+  this->disable();
+}
+
 void SX126x::read_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->enable();
+  this->wait_busy_();
   this->write_byte(RADIO_READ_REGISTER);
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
@@ -31,10 +49,10 @@ void SX126x::read_register_(uint16_t reg, uint8_t *data, uint8_t size) {
 
 void SX126x::write_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->enable();
+  this->wait_busy_();
   this->write_byte(RADIO_WRITE_REGISTER);
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
-  this->write_byte(0x00);
   this->write_array(data, size);
   this->disable();
 }
@@ -63,10 +81,11 @@ void SX126x::write_fifo_(const std::vector<uint8_t> &packet) {
   this->disable();
 }
 
-void SX126x::setup2() {
+void SX126x::setup() {
   ESP_LOGCONFIG(TAG, "Setting up SX126x...");
 
-  // setup reset
+  // setup busy and reset
+  this->busy_pin_->setup();
   this->rst_pin_->setup();
 
   // setup dio0
@@ -89,7 +108,6 @@ void SX126x::configure() {
   delayMicroseconds(1000);
   this->rst_pin_->digital_write(true);
   delayMicroseconds(10000);
-
   
   // check silicon version to make sure hw is ok
   this->read_register_(0x0320, (uint8_t*) this->version_, 16);
@@ -363,10 +381,21 @@ void SX126x::set_mode_tx() {
 
 void SX126x::set_mode_standby() { this->set_mode_(MODE_STDBY); }
 
+void SX126x::wait_busy_() {
+  uint32_t start = millis();
+  while (this->busy_pin_->digital_read()) {
+    if (millis() - start > 1000) {
+      ESP_LOGE(TAG, "Wait busy timout");
+      break;
+    }
+  }
+}
+
 void SX126x::dump_config() {
   ESP_LOGCONFIG(TAG, "SX126x:");
   ESP_LOGCONFIG(TAG, "  HW Version: %15s", this->version_);
   LOG_PIN("  CS Pin: ", this->cs_);
+  LOG_PIN("  BUSY Pin: ", this->busy_pin_);
   LOG_PIN("  RST Pin: ", this->rst_pin_);
   LOG_PIN("  DIO0 Pin: ", this->dio0_pin_);
   ESP_LOGCONFIG(TAG, "  Frequency: %" PRIu32 " Hz", this->frequency_);
