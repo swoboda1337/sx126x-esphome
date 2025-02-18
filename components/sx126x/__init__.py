@@ -14,7 +14,7 @@ CONF_BITSYNC = "bitsync"
 CONF_CODING_RATE = "coding_rate"
 CONF_CRC_ENABLE = "crc_enable"
 CONF_DEVIATION = "deviation"
-CONF_DIO0_PIN = "dio0_pin"
+CONF_DIO1_PIN = "dio1_pin"
 CONF_MODULATION = "modulation"
 CONF_ON_PACKET = "on_packet"
 CONF_PA_PIN = "pa_pin"
@@ -35,10 +35,10 @@ CONF_SYNC_VALUE = "sync_value"
 sx126x_ns = cg.esphome_ns.namespace("sx126x")
 SX126x = sx126x_ns.class_("SX126x", cg.Component, spi.SPIDevice)
 SX126xBw = sx126x_ns.enum("SX126xBw")
-SX126xOpMode = sx126x_ns.enum("SX126xOpMode")
+SX126xPacketType = sx126x_ns.enum("SX126xPacketType")
 SX126xPaConfig = sx126x_ns.enum("SX126xPaConfig")
 SX126xPaRamp = sx126x_ns.enum("SX126xPaRamp")
-SX126xModemCfg1 = sx126x_ns.enum("SX126xModemCfg1")
+SX126xLoraCr = sx126x_ns.enum("SX126xLoraCr")
 
 BW = {
     "2_6kHz": SX126xBw.SX126X_BW_2_6,
@@ -66,16 +66,16 @@ BW = {
 }
 
 CODING_RATE = {
-    "CR_4_5": SX126xModemCfg1.CODING_RATE_4_5,
-    "CR_4_6": SX126xModemCfg1.CODING_RATE_4_6,
-    "CR_4_7": SX126xModemCfg1.CODING_RATE_4_7,
-    "CR_4_8": SX126xModemCfg1.CODING_RATE_4_8,
+    "CR_4_5": SX126xLoraCr.LORA_CR_4_5,
+    "CR_4_6": SX126xLoraCr.LORA_CR_4_6,
+    "CR_4_7": SX126xLoraCr.LORA_CR_4_7,
+    "CR_4_8": SX126xLoraCr.LORA_CR_4_8,
 }
 
 MOD = {
-    "LORA": SX126xOpMode.MOD_LORA,
-    "FSK": SX126xOpMode.MOD_FSK,
-    "OOK": SX126xOpMode.MOD_OOK,
+    "LORA": SX126xPacketType.PACKET_TYPE_LORA,
+    "GFSK": SX126xPacketType.PACKET_TYPE_GFSK,
+    "LRHSS": SX126xPacketType.PACKET_TYPE_LRHSS,
 }
 
 PA_PIN = {
@@ -149,8 +149,8 @@ def validate_config(config):
             raise cv.Invalid(
                 f"Bandwidth {config[CONF_BANDWIDTH]} is not available with LORA"
             )
-        if CONF_DIO0_PIN not in config:
-            raise cv.Invalid("Cannot use LoRa without dio0_pin")
+        if CONF_DIO1_PIN not in config:
+            raise cv.Invalid("Cannot use LoRa without dio1_pin")
         if config[CONF_PREAMBLE_SIZE] > 0 and config[CONF_PREAMBLE_SIZE] < 6:
             raise cv.Invalid("Minimum preamble size is 6 with LORA")
         if config[CONF_SPREADING_FACTOR] == 6 and config[CONF_PAYLOAD_LENGTH] == 0:
@@ -162,8 +162,8 @@ def validate_config(config):
             )
         if config[CONF_PAYLOAD_LENGTH] > 64:
             raise cv.Invalid("Payload length must be >= 64 with FSK/OOK")
-        if config[CONF_PAYLOAD_LENGTH] > 0 and CONF_DIO0_PIN not in config:
-            raise cv.Invalid("Cannot use packet mode without dio0_pin")
+        if config[CONF_PAYLOAD_LENGTH] > 0 and CONF_DIO1_PIN not in config:
+            raise cv.Invalid("Cannot use packet mode without dio1_pin")
         if CONF_BITRATE not in config:
             if config[CONF_PAYLOAD_LENGTH] > 0:
                 raise cv.Invalid("Cannot use packet mode without setting bitrate")
@@ -191,7 +191,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_CODING_RATE, default="CR_4_5"): cv.enum(CODING_RATE),
             cv.Optional(CONF_CRC_ENABLE, default=False): cv.boolean,
             cv.Optional(CONF_DEVIATION, default=5000): cv.int_range(min=0, max=100000),
-            cv.Optional(CONF_DIO0_PIN): pins.internal_gpio_input_pin_schema,
+            cv.Optional(CONF_DIO1_PIN): pins.internal_gpio_input_pin_schema,
             cv.Required(CONF_FREQUENCY): cv.int_range(min=137000000, max=1020000000),
             cv.Required(CONF_MODULATION): cv.enum(MOD),
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
@@ -232,9 +232,9 @@ async def to_code(config):
             ],
             config[CONF_ON_PACKET],
         )
-    if CONF_DIO0_PIN in config:
-        dio0_pin = await cg.gpio_pin_expression(config[CONF_DIO0_PIN])
-        cg.add(var.set_dio0_pin(dio0_pin))
+    if CONF_DIO1_PIN in config:
+        dio1_pin = await cg.gpio_pin_expression(config[CONF_DIO1_PIN])
+        cg.add(var.set_dio1_pin(dio1_pin))
     rst_pin = await cg.gpio_pin_expression(config[CONF_RST_PIN])
     cg.add(var.set_rst_pin(rst_pin))
     busy_pin = await cg.gpio_pin_expression(config[CONF_BUSY_PIN])

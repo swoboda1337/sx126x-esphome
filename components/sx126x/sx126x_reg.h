@@ -5,6 +5,11 @@
 namespace esphome {
 namespace sx126x {
 
+static const uint32_t XTAL_FREQ = 32000000;
+static const uint32_t FREQ_DIV = 33554432;
+static const float FREQ_STEP = 0.95367431640625;
+static const float FREQ_ERR = 0.47683715820312;
+
 enum SX126xOpCode : uint8_t {
   RADIO_GET_STATUS = 0xC0,
   RADIO_WRITE_REGISTER = 0x0D,
@@ -48,6 +53,45 @@ enum SX126xOpCode : uint8_t {
   RADIO_SET_STOPRXTIMERONPREAMBLE = 0x9F,
   RADIO_SET_LORASYMBTIMEOUT = 0xA0,
 };
+
+enum SX126xMode : uint8_t {
+  MODE_SLEEP,
+  MODE_DEEP_SLEEP,
+  MODE_STDBY_RC,
+  MODE_STDBY_XOSC,
+  MODE_FS,
+  MODE_TX,
+  MODE_RX,
+  MODE_RX_DC,
+  MODE_CAD,
+};
+
+enum SX126xPacketType : uint8_t {
+  PACKET_TYPE_GFSK = 0x00,
+  PACKET_TYPE_LORA = 0x01,
+  PACKET_TYPE_LRHSS = 0x03,
+};
+
+enum SX126xLoraBw : uint8_t {
+  LORA_BW_7 = 0x00,
+  LORA_BW_10 = 0x08,
+  LORA_BW_15 = 0x01,
+  LORA_BW_20 = 0x09,
+  LORA_BW_31 = 0x02,
+  LORA_BW_41 = 0x0A,
+  LORA_BW_62 = 0x03,
+  LORA_BW_125 = 0x04,
+  LORA_BW_250 = 0x05,
+  LORA_BW_500 = 0x06,
+};
+
+enum SX126xLoraCr : uint8_t {
+  LORA_CR_4_5 = 0x01,
+  LORA_CR_4_6 = 0x02,
+  LORA_CR_4_7 = 0x03,
+  LORA_CR_4_8 = 0x04,
+};
+
 
 enum SX126xReg : uint8_t {
   // Common registers
@@ -129,15 +173,15 @@ enum SX126xOpMode : uint8_t {
   MOD_FSK = 0x00,
   ACCESS_LF_REGS = 0x08,
   ACCESS_HF_REGS = 0x00,
-  MODE_CAD = 0x07,
-  MODE_RX_SINGLE = 0x06,
-  MODE_RX = 0x05,
-  MODE_RX_FS = 0x04,
-  MODE_TX = 0x03,
-  MODE_TX_FS = 0x02,
-  MODE_STDBY = 0x01,
-  MODE_SLEEP = 0x00,
-  MODE_MASK = 0x07,
+  // MODE_CAD = 0x07,
+  // MODE_RX_SINGLE = 0x06,
+  // MODE_RX = 0x05,
+  // MODE_RX_FS = 0x04,
+  // MODE_TX = 0x03,
+  // MODE_TX_FS = 0x02,
+  // MODE_STDBY = 0x01,
+  // MODE_SLEEP = 0x00,
+  // MODE_MASK = 0x07,
 };
 
 enum SX126xPaConfig : uint8_t {

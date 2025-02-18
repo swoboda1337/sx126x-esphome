@@ -49,7 +49,7 @@ class SX126x : public Component,
   void set_coding_rate(uint8_t coding_rate) { this->coding_rate_ = coding_rate; }
   void set_crc_enable(bool crc_enable) { this->crc_enable_ = crc_enable; }
   void set_deviation(uint32_t deviation) { this->deviation_ = deviation; }
-  void set_dio0_pin(InternalGPIOPin *dio0_pin) { this->dio0_pin_ = dio0_pin; }
+  void set_dio1_pin(InternalGPIOPin *dio1_pin) { this->dio1_pin_ = dio1_pin; }
   void set_frequency(uint32_t frequency) { this->frequency_ = frequency; }
   void set_mode_rx();
   void set_mode_standby();
@@ -89,7 +89,7 @@ class SX126x : public Component,
   Trigger<std::vector<uint8_t>, float, float> *packet_trigger_{new Trigger<std::vector<uint8_t>, float, float>()};
   std::vector<uint8_t> sync_value_;
   InternalGPIOPin *busy_pin_{nullptr};
-  InternalGPIOPin *dio0_pin_{nullptr};
+  InternalGPIOPin *dio1_pin_{nullptr};
   InternalGPIOPin *rst_pin_{nullptr};
   SX126xBw bandwidth_;
   char version_[16];
