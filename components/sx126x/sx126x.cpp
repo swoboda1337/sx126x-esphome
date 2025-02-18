@@ -84,26 +84,22 @@ void SX126x::write_fifo_(const std::vector<uint8_t> &packet) {
 void SX126x::setup() {
   ESP_LOGCONFIG(TAG, "Setting up SX126x...");
 
-  // setup busy and reset
+  // setup pins
   this->busy_pin_->setup();
   this->rst_pin_->setup();
-
-  // setup dio1
-  if (this->dio1_pin_) {
-    this->dio1_pin_->setup();
-  }
+  this->dio1_pin_->setup();
 
   // start spi
   this->spi_setup();
 
   // configure rf
-  this->configure();
+  // this->configure();
 }
 
 #define RADIOLIB_SX126X_REG_VERSION_STRING                      0x0320
 
 void SX126x::configure() {
-  uint8_t buf[6];
+  uint8_t buf[8];
 
   // toggle chip reset
   this->rst_pin_->digital_write(false);
@@ -112,12 +108,36 @@ void SX126x::configure() {
   delayMicroseconds(6000);
   this->wait_busy_();
 
+    buf[0] = 0x00;
+    buf[1] = 0x00;
+    this->write_opcode_(RADIO_CLR_ERROR, buf, 2);
+
+    buf[0] = 0x01;
+    this->write_opcode_(RADIO_SET_RFSWITCHMODE, buf, 1);
+
+    buf[0] = 0x01;
+    buf[1] = 0x00;
+    buf[2] = 0x01;
+    buf[3] = 0x40;
+    this->write_opcode_(RADIO_SET_TCXOMODE, buf, 4);
+
+      this->read_opcode_(RADIO_GET_STATUS, buf, 1);
+      ESP_LOGE(TAG, "status %02x", buf[0]);
+      this->read_opcode_(RADIO_GET_ERROR, buf, 2);
+      ESP_LOGE(TAG, "errors %02x %02x", buf[0], buf[1]);
+
   // check silicon version to make sure hw is ok
   this->read_register_(0x0320, (uint8_t*) this->version_, 16);
   if (strncmp(this->version_, "SX126", 5) != 0) {
     this->mark_failed();
     return;
   }
+
+
+      this->read_opcode_(RADIO_GET_STATUS, buf, 1);
+      ESP_LOGE(TAG, "status %02x", buf[0]);
+      this->read_opcode_(RADIO_GET_ERROR, buf, 2);
+      ESP_LOGE(TAG, "errors %02x %02x", buf[0], buf[1]);
 
   // setup buffer
   buf[0] = 0;
@@ -128,8 +148,18 @@ void SX126x::configure() {
   buf[0] = this->modulation_;
   this->write_opcode_(RADIO_SET_PACKETTYPE, buf, 1);
 
-  // this->read_opcode_(RADIO_GET_STATUS, buf, 1);
-  // ESP_LOGE(TAG, "%02x", buf[0]);
+  buf[0] = 0x01;
+  this->write_opcode_(RADIO_SET_REGULATORMODE, buf, 1);
+
+  buf[0] = MODE_STDBY_XOSC;
+  this->write_opcode_(RADIO_SET_STANDBY, buf, 1);
+
+
+      this->read_opcode_(RADIO_GET_STATUS, buf, 1);
+      ESP_LOGE(TAG, "status %02x", buf[0]);
+      this->read_opcode_(RADIO_GET_ERROR, buf, 2);
+      ESP_LOGE(TAG, "errors %02x %02x", buf[0], buf[1]);
+
   // // enter sleep mode
   // this->write_register_(REG_OP_MODE, MODE_SLEEP);
   // delayMicroseconds(1000);
@@ -140,7 +170,27 @@ void SX126x::configure() {
   // this->write_register_(REG_FRF_MID, (uint8_t) ((frf >> 8) & 0xFF));
   // this->write_register_(REG_FRF_LSB, (uint8_t) ((frf >> 0) & 0xFF));
 
-  uint32_t freq = (uint32_t) std::ceil((float) this->frequency_ / FREQ_STEP);
+  if (this->frequency_ > 900000000) {
+    buf[0] = 0xE1;
+    buf[1] = 0xE9;
+  } else if (this->frequency_ > 850000000) {
+    buf[0] = 0xD7;
+    buf[1] = 0xD8;
+  } else if (this->frequency_ > 770000000) {
+    buf[0] = 0xC1;
+    buf[1] = 0xC5;
+  } else if (this->frequency_ > 460000000) {
+    buf[0] = 0x75;
+    buf[1] = 0x81;
+  } else if (this->frequency_ > 425000000) {
+    buf[0] = 0x6B;
+    buf[1] = 0x6F;
+  }
+  this->write_opcode_(RADIO_CALIBRATEIMAGE, buf, 2);
+
+
+  uint64_t freq = ((uint64_t) this->frequency_ << 25) / XTAL_FREQ;
+  ESP_LOGE(TAG, "%" PRIu32, freq);
   buf[0] = (uint8_t) ((freq >> 24) & 0xFF);
   buf[1] = (uint8_t) ((freq >> 16) & 0xFF);
   buf[2] = (uint8_t) ((freq >> 8) & 0xFF);
@@ -173,8 +223,18 @@ void SX126x::configure() {
   //   this->write_register_(REG_PA_RAMP, this->pa_ramp_);
   // }
 
+  buf[0] = (IRQ_RX_DONE >> 8) & 0xFF;
+  buf[1] = (IRQ_RX_DONE >> 0) & 0xFF;
+  buf[2] = (IRQ_RX_DONE >> 8) & 0xFF;
+  buf[3] = (IRQ_RX_DONE >> 0) & 0xFF;
+  buf[4] = (IRQ_RADIO_NONE >> 8) & 0xFF;
+  buf[5] = (IRQ_RADIO_NONE >> 0) & 0xFF;
+  buf[6] = (IRQ_RADIO_NONE >> 8) & 0xFF;
+  buf[7] = (IRQ_RADIO_NONE >> 0) & 0xFF;
+  this->write_opcode_(RADIO_SET_DIOIRQPARAMS, buf, 8);
+
   // configure modem
-  if (this->modulation_ == MOD_LORA) {
+  if (this->modulation_ == PACKET_TYPE_LORA) {
     // set modulation params
     float duration = 1000.0f * std::pow(2, this->spreading_factor_) / BW_HZ[this->bandwidth_];
     buf[0] = this->spreading_factor_;
@@ -191,16 +251,35 @@ void SX126x::configure() {
     buf[4] = (this->crc_enable_) ? 0x01 : 0x00;
     buf[5] = 0x00;
     this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 6);
+
+    // set timeout to 0
+    buf[0] = 0x00;
+    this->write_opcode_(RADIO_SET_LORASYMBTIMEOUT, buf, 1);
+    ESP_LOGE(TAG, "Wtfff");
+
+    // write sync word
+    this->write_register_(REG_LR_SYNCWORD + 0, 0x14);
+    this->write_register_(REG_LR_SYNCWORD + 1, 0x24);
   } else {
     this->configure_fsk_ook_();
   }
 
-  // // switch to rx or standby
+      this->read_opcode_(RADIO_GET_STATUS, buf, 1);
+      ESP_LOGE(TAG, "status %02x", buf[0]);
+      this->read_opcode_(RADIO_GET_ERROR, buf, 2);
+      ESP_LOGE(TAG, "errors %02x %02x", buf[0], buf[1]);
+
+  // switch to rx or standby
   // if (this->rx_start_) {
-  //   this->set_mode_rx();
+    this->set_mode_rx();
   // } else {
   //   this->set_mode_standby();
   // }
+
+  this->read_opcode_(RADIO_GET_STATUS, buf, 1);
+  ESP_LOGE(TAG, "status %02x", buf[0]);
+  this->read_opcode_(RADIO_GET_ERROR, buf, 2);
+  ESP_LOGE(TAG, "errors %02x %02x", buf[0], buf[1]);
 }
 
 void SX126x::configure_fsk_ook_() {
@@ -348,29 +427,43 @@ void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
 }
 
 void SX126x::loop() {
-  // if (this->modulation_ == MOD_LORA) {
-  //   if (this->dio1_pin_->digital_read()) {
-  //     if ((this->read_register_(REG_IRQ_FLAGS) & PAYLOAD_CRC_ERROR) == 0) {
-  //       uint8_t bytes = this->read_register_(REG_NB_RX_BYTES);
-  //       uint8_t addr = this->read_register_(REG_FIFO_RX_CURR_ADDR);
-  //       uint8_t rssi = this->read_register_(REG_PKT_RSSI_VALUE);
-  //       uint8_t snr = this->read_register_(REG_PKT_SNR_VALUE);
-  //       std::vector<uint8_t> packet(bytes);
-  //       this->write_register_(REG_FIFO_ADDR_PTR, addr);
-  //       this->read_fifo_(packet);
-  //       if (this->frequency_ > 700000000) {
-  //         this->packet_trigger_->trigger(packet, (float) rssi - 157, (float) snr / 4);
-  //       } else {
-  //         this->packet_trigger_->trigger(packet, (float) rssi - 164, (float) snr / 4);
-  //       }
-  //     }
-  //     this->write_register_(REG_IRQ_FLAGS, 0xFF);
-  //   }
-  // } else if (this->payload_length_ > 0 && this->dio1_pin_->digital_read()) {
-  //   std::vector<uint8_t> packet(this->payload_length_);
-  //   this->read_fifo_(packet);
-  //   this->packet_trigger_->trigger(packet, 0.0f, 0.0f);
-  // }
+  if (this->dio1_pin_->digital_read()) {
+    static uint8_t counter = 0;
+    uint8_t buf[3];
+    this->read_opcode_(RADIO_GET_IRQSTATUS, buf, 2);
+    uint16_t status = (buf[0] << 8) | buf[1];
+
+    ESP_LOGE(TAG, "%04x", status);
+    this->read_opcode_(RADIO_GET_STATUS, buf, 1);
+    ESP_LOGE(TAG, "%02x", buf[0]);
+    this->read_opcode_(RADIO_GET_ERROR, buf, 2);
+    ESP_LOGE(TAG, "%02x %02x", buf[0], buf[1]);
+
+    if ((status & IRQ_RX_DONE) == IRQ_RX_DONE) {
+      if ((status & IRQ_CRC_ERROR) != IRQ_CRC_ERROR) {
+        uint8_t buf[2];
+        this->read_opcode_(RADIO_GET_RXBUFFERSTATUS, buf, 2);
+        ESP_LOGE(TAG, "%02x %02x", buf[0], buf[1]);
+
+        // uint8_t bytes = this->read_register_(REG_NB_RX_BYTES);
+        // uint8_t addr = this->read_register_(REG_FIFO_RX_CURR_ADDR);
+        // uint8_t rssi = this->read_register_(REG_PKT_RSSI_VALUE);
+        // uint8_t snr = this->read_register_(REG_PKT_SNR_VALUE);
+        // std::vector<uint8_t> packet(bytes);
+        // this->write_register_(REG_FIFO_ADDR_PTR, addr);
+        // this->read_fifo_(packet);
+        // if (this->frequency_ > 700000000) {
+        //   this->packet_trigger_->trigger(packet, (float) rssi - 157, (float) snr / 4);
+        // } else {
+        //   this->packet_trigger_->trigger(packet, (float) rssi - 164, (float) snr / 4);
+        // }
+      }
+    }
+    buf[0] = (status >> 8) & 0xFF;
+    buf[1] = (status >> 0) & 0xFF;
+    this->write_opcode_(RADIO_CLR_IRQSTATUS, buf, 2);
+    this->set_mode_rx();
+  }
 }
 
 void SX126x::run_image_cal() {
@@ -400,11 +493,12 @@ void SX126x::set_mode_(SX126xOpMode mode) {
 }
 
 void SX126x::set_mode_rx() {
-  // this->set_mode_(MODE_RX);
-  // if (this->modulation_ == MOD_LORA) {
-  //   this->write_register_(REG_IRQ_FLAGS_MASK, 0x00);
-  //   this->write_register_(REG_DIO_MAPPING1, DIO0_MAPPING_00);
-  // }
+  uint8_t buf[3];
+  buf[0] = 0xFF;
+  buf[1] = 0xFF;
+  buf[2] = 0xFF;
+  this->write_opcode_(RADIO_SET_RX, buf, 3);
+  this->wait_busy_();
 }
 
 void SX126x::set_mode_tx() {
@@ -433,7 +527,7 @@ void SX126x::dump_config() {
   LOG_PIN("  CS Pin: ", this->cs_);
   LOG_PIN("  BUSY Pin: ", this->busy_pin_);
   LOG_PIN("  RST Pin: ", this->rst_pin_);
-  LOG_PIN("  DIO0 Pin: ", this->dio1_pin_);
+  LOG_PIN("  DIO1 Pin: ", this->dio1_pin_);
   ESP_LOGCONFIG(TAG, "  Frequency: %" PRIu32 " Hz", this->frequency_);
   ESP_LOGCONFIG(TAG, "  Bandwidth: %" PRIu32 " Hz", BW_HZ[this->bandwidth_]);
   ESP_LOGCONFIG(TAG, "  PA Pin: %s", this->pa_pin_ == PA_PIN_BOOST ? "BOOST" : "RFO");

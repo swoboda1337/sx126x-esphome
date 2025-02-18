@@ -6,9 +6,6 @@ namespace esphome {
 namespace sx126x {
 
 static const uint32_t XTAL_FREQ = 32000000;
-static const uint32_t FREQ_DIV = 33554432;
-static const float FREQ_STEP = 0.95367431640625;
-static const float FREQ_ERR = 0.47683715820312;
 
 enum SX126xOpCode : uint8_t {
   RADIO_GET_STATUS = 0xC0,
@@ -39,7 +36,7 @@ enum SX126xOpCode : uint8_t {
   RADIO_GET_RSSIINST = 0x15,
   RADIO_GET_STATS = 0x10,
   RADIO_RESET_STATS = 0x00,
-  RADIO_CFG_DIOIRQ = 0x08,
+  RADIO_SET_DIOIRQPARAMS = 0x08,
   RADIO_GET_IRQSTATUS = 0x12,
   RADIO_CLR_IRQSTATUS = 0x02,
   RADIO_CALIBRATE = 0x89,
@@ -91,6 +88,31 @@ enum SX126xLoraCr : uint8_t {
   LORA_CR_4_7 = 0x03,
   LORA_CR_4_8 = 0x04,
 };
+
+enum SX126xIrqMasks : uint16_t {
+  IRQ_RADIO_NONE = 0x0000,
+  IRQ_TX_DONE = 0x0001,
+  IRQ_RX_DONE = 0x0002,
+  IRQ_PREAMBLE_DETECTED = 0x0004,
+  IRQ_SYNCWORD_VALID = 0x0008,
+  IRQ_HEADER_VALID = 0x0010,
+  IRQ_HEADER_ERROR = 0x0020,
+  IRQ_CRC_ERROR = 0x0040,
+  IRQ_CAD_DONE = 0x0080,
+  IRQ_CAD_ACTIVITY_DETECTED = 0x0100,
+  IRQ_RX_TX_TIMEOUT = 0x0200,
+  IRQ_RADIO_ALL = 0xFFFF,
+};
+
+/*!
+ * \brief The addresses of the registers holding SyncWords values
+ */
+#define REG_LR_SYNCWORDBASEADDRESS                  0x06C0
+
+/*!
+ * \brief The addresses of the register holding LoRa Modem SyncWord value
+ */
+#define REG_LR_SYNCWORD                             0x0740
 
 
 enum SX126xReg : uint8_t {
