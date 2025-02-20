@@ -104,6 +104,20 @@ enum SX126xIrqMasks : uint16_t {
   IRQ_RADIO_ALL = 0xFFFF,
 };
 
+
+typedef enum
+{
+    TCXO_CTRL_1_6V                          = 0x00,
+    TCXO_CTRL_1_7V                          = 0x01,
+    TCXO_CTRL_1_8V                          = 0x02,
+    TCXO_CTRL_2_2V                          = 0x03,
+    TCXO_CTRL_2_4V                          = 0x04,
+    TCXO_CTRL_2_7V                          = 0x05,
+    TCXO_CTRL_3_0V                          = 0x06,
+    TCXO_CTRL_3_3V                          = 0x07,
+}RadioTcxoCtrlVoltage_t;
+
+
 /*!
  * \brief The addresses of the registers holding SyncWords values
  */
@@ -113,6 +127,8 @@ enum SX126xIrqMasks : uint16_t {
  * \brief The addresses of the register holding LoRa Modem SyncWord value
  */
 #define REG_LR_SYNCWORD                             0x0740
+
+#define REG_VERSION_STRING                      0x0320
 
 
 enum SX126xReg : uint8_t {
