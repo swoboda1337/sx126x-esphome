@@ -1,4 +1,4 @@
-Note this a WIP. Code was ported from multiple sources, it is messy and need to be cleaned up. Basic rx and tx does work for LoRa but more testing is needed. 
+Warning this a WIP, only a few hours of work has been put into it. Code was ported from multiple sources, it is messy and need to be cleaned up. Basic rx and tx does work for LoRa but more testing is needed. 
 
 ESPHome SX126x driver.
 
