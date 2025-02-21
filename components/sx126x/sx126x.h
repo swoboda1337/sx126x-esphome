@@ -77,8 +77,8 @@ class SX126x : public Component,
   void configure_fsk_ook_();
   void configure_lora_();
   void set_mode_(SX126xOpMode mode);
-  void write_fifo_(const std::vector<uint8_t> &packet);
-  void read_fifo_(std::vector<uint8_t> &packet);
+  uint8_t read_fifo_(uint8_t offset, std::vector<uint8_t> &packet);
+  void write_fifo_(uint8_t opcode, std::vector<uint8_t> &packet);
   void write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   uint8_t read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   void write_register_(uint16_t reg, uint8_t *data, uint8_t size);
@@ -86,7 +86,7 @@ class SX126x : public Component,
   void read_register_(uint16_t reg, uint8_t *data, uint8_t size);
   uint8_t read_register_(uint16_t reg);
   void wait_busy_();
-  void wakeup_();
+  uint8_t wakeup_();
   Trigger<std::vector<uint8_t>, float, float> *packet_trigger_{new Trigger<std::vector<uint8_t>, float, float>()};
   std::vector<uint8_t> sync_value_;
   InternalGPIOPin *busy_pin_{nullptr};
