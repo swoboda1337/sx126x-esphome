@@ -1,3 +1,5 @@
+Note this a WIP. Code was ported from multiple sources, it is messy and need to be cleaned up. Basic rx and tx does work for LoRa but more testing is needed. 
+
 ESPHome SX126x driver.
 
 SX126x component configures SX1261, SX1262 or SX1268 hardware for use in ESPHome. Tested with the Heltec WiFi LoRa 32 V3 Dev-board with SX1262.
