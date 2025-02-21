@@ -130,6 +130,7 @@ enum SX126xTcxoCtrl_t : uint8_t {
 
 #define REG_VERSION_STRING                      0x0320
 
+#define REG_OCP 0x08E7
 
 enum SX126xReg : uint8_t {
   // Common registers

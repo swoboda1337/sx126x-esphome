@@ -67,6 +67,7 @@ class SX126x : public Component,
   void set_rx_start(bool start) { this->rx_start_ = start; }
   void set_shaping(uint8_t shaping) { this->shaping_ = shaping; }
   void set_spreading_factor(uint8_t spreading_factor) { this->spreading_factor_ = spreading_factor; }
+  void set_sx1261(uint8_t sx1261) { this->sx1261_ = sx1261; }
   void set_sync_value(const std::vector<uint8_t> &sync_value) { this->sync_value_ = sync_value; }
   void set_tcxo_voltage(uint8_t tcxo_voltage) { this->tcxo_voltage_ = tcxo_voltage; }
   void set_tcxo_delay(uint32_t tcxo_delay) { this->tcxo_delay_ = tcxo_delay; }
@@ -79,8 +80,9 @@ class SX126x : public Component,
   void configure_fsk_ook_();
   void configure_lora_();
   void set_mode_(SX126xOpMode mode);
+  void set_packet_params_(uint8_t payload_length);
   uint8_t read_fifo_(uint8_t offset, std::vector<uint8_t> &packet);
-  void write_fifo_(uint8_t opcode, std::vector<uint8_t> &packet);
+  void write_fifo_(uint8_t opcode, const std::vector<uint8_t> &packet);
   void write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   uint8_t read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   void write_register_(uint16_t reg, uint8_t *data, uint8_t size);
@@ -115,6 +117,7 @@ class SX126x : public Component,
   float rx_floor_;
   bool bitsync_;
   bool crc_enable_;
+  bool sx1261_;
   bool rx_start_;
 };
 

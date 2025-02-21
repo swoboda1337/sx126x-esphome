@@ -31,6 +31,7 @@ CONF_RX_FLOOR = "rx_floor"
 CONF_RX_START = "rx_start"
 CONF_SHAPING = "shaping"
 CONF_SPREADING_FACTOR = "spreading_factor"
+CONF_SX1261 = "sx1261"
 CONF_SYNC_VALUE = "sync_value"
 CONF_TCXO_VOLTAGE = "tcxo_voltage"
 CONF_TCXO_DELAY = "tcxo_delay"
@@ -225,6 +226,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_RX_START, default=True): cv.boolean,
             cv.Optional(CONF_SHAPING, default="NONE"): cv.enum(SHAPING),
             cv.Optional(CONF_SPREADING_FACTOR, default=7): cv.int_range(min=6, max=12),
+            cv.Optional(CONF_SX1261, default=False): cv.boolean,
             cv.Optional(CONF_SYNC_VALUE, default=[]): cv.ensure_list(cv.hex_uint8_t),
             cv.Optional(CONF_TCXO_VOLTAGE, default="NONE"): cv.enum(TCXO_VOLTAGE),
             cv.Optional(CONF_TCXO_DELAY, default="5ms"): cv.All(
@@ -283,6 +285,7 @@ async def to_code(config):
     cg.add(var.set_preamble_errors(config[CONF_PREAMBLE_ERRORS]))
     cg.add(var.set_coding_rate(config[CONF_CODING_RATE]))
     cg.add(var.set_spreading_factor(config[CONF_SPREADING_FACTOR]))
+    cg.add(var.set_sx1261(config[CONF_SX1261]))
     cg.add(var.set_sync_value(config[CONF_SYNC_VALUE]))
     cg.add(var.set_rx_floor(config[CONF_RX_FLOOR]))
     cg.add(var.set_rx_start(config[CONF_RX_START]))

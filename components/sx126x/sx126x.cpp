@@ -44,10 +44,11 @@ uint8_t SX126x::read_fifo_(uint8_t offset, std::vector<uint8_t> &packet) {
   return status;
 }
 
-void SX126x::write_fifo_(uint8_t opcode, std::vector<uint8_t> &packet) {
+void SX126x::write_fifo_(uint8_t offset, const std::vector<uint8_t> &packet) {
   this->wait_busy_();
   this->enable();
-  this->transfer_byte(opcode);
+  this->transfer_byte(RADIO_WRITE_BUFFER);
+  this->transfer_byte(offset);
   for(int i = 0; i < packet.size(); i++) {
      this->transfer_byte(packet[i]);
   }
@@ -239,6 +240,29 @@ void SX126x::configure() {
   buf[3] = (uint8_t) (freq & 0xFF);
   this->write_opcode_(RADIO_SET_RFFREQUENCY, buf, 4);
 
+  // configure pa
+  int8_t pa_power = this->pa_power_;
+  if (this->sx1261_) {
+    if (pa_power == 15) {
+      uint8_t cfg[4] = {0x06, 0x00, 0x01, 0x01};
+      this->write_opcode_(RADIO_SET_PACONFIG, cfg, 4);
+    } else {
+      uint8_t cfg[4] = {0x04, 0x00, 0x01, 0x01};
+      this->write_opcode_(RADIO_SET_PACONFIG, cfg, 4);
+    }
+    pa_power = std::max(pa_power, (int8_t) -3);
+    pa_power = std::min(pa_power, (int8_t) 14);
+    this->write_register_(REG_OCP, 0x18); // max 80 mA
+  } else {
+    uint8_t cfg[4] = {0x04, 0x07, 0x00, 0x01};
+    this->write_opcode_(RADIO_SET_PACONFIG, cfg, 4);
+    pa_power = std::max(pa_power, (int8_t) -3);
+    pa_power = std::min(pa_power, (int8_t) 22);
+    this->write_register_(REG_OCP, 0x38); // max 140 mA
+  }
+  buf[0] = pa_power;
+  buf[1] = this->pa_ramp_;
+  this->write_opcode_(RADIO_SET_TXPARAMS, buf, 2);
 
   // configure modem
   if (this->modulation_ == PACKET_TYPE_LORA) {
@@ -250,81 +274,63 @@ void SX126x::configure() {
     buf[3] = (duration > 16.38f) ? 0x01 : 0x00;
     this->write_opcode_(RADIO_SET_MODULATIONPARAMS, buf, 4);
 
-    // set packet params
-    buf[0] = (this->preamble_size_ >> 8) & 0xFF;
-    buf[1] = (this->preamble_size_ >> 0) & 0xFF;
-    buf[2] = (this->payload_length_ > 0) ? 0x01 : 0x00;
-    buf[3] = this->payload_length_;
-    buf[4] = (this->crc_enable_) ? 0x01 : 0x00;
-    buf[5] = 0x00;
-    this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 6);
-
-    // set timeout to 0
-    buf[0] = 0x00;
-    this->write_opcode_(RADIO_SET_LORASYMBTIMEOUT, buf, 1);
+    this->set_packet_params_(this->payload_length_);
 
     // write sync word
     this->write_register_(REG_LR_SYNCWORD + 0, 0x14);
     this->write_register_(REG_LR_SYNCWORD + 1, 0x24);
   }
 
-
-
-  uint16_t irq =  IRQ_RX_DONE | IRQ_RX_TX_TIMEOUT | IRQ_CRC_ERROR;
-  buf[0] = (irq >> 8) & 0xFF;
-  buf[1] = (irq >> 0) & 0xFF;
-  buf[2] = (irq >> 8) & 0xFF;
-  buf[3] = (irq >> 0) & 0xFF;
-  buf[4] = (IRQ_RADIO_NONE >> 8) & 0xFF;
-  buf[5] = (IRQ_RADIO_NONE >> 0) & 0xFF;
-  buf[6] = (IRQ_RADIO_NONE >> 8) & 0xFF;
-  buf[7] = (IRQ_RADIO_NONE >> 0) & 0xFF;
-  this->write_opcode_(RADIO_SET_DIOIRQPARAMS, buf, 8);
-
   // switch to rx or standby
-  // if (this->rx_start_) {
+  if (this->rx_start_) {
     this->set_mode_rx();
-  // } else {
-  //   this->set_mode_standby();
-  // }
+  } else {
+    this->set_mode_standby();
+  }
+}
 
-
+void SX126x::set_packet_params_(uint8_t payload_length) {
+    uint8_t buf[6];
+    buf[0] = (this->preamble_size_ >> 8) & 0xFF;
+    buf[1] = (this->preamble_size_ >> 0) & 0xFF;
+    buf[2] = (this->payload_length_ > 0) ? 0x01 : 0x00;
+    buf[3] = payload_length;
+    buf[4] = (this->crc_enable_) ? 0x01 : 0x00;
+    buf[5] = 0x00;
+    this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 6);
 }
 
 void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
-  // if (this->payload_length_ > 0 && this->payload_length_ != packet.size()) {
-  //   ESP_LOGE(TAG, "Packet size does not match payload length");
-  //   return;
-  // }
-  // if (packet.empty() || packet.size() > 256) {
-  //   ESP_LOGE(TAG, "Packet size out of range");
-  //   return;
-  // }
-  // if (this->modulation_ == MOD_LORA) {
-  //   this->set_mode_standby();
-  //   if (this->payload_length_ == 0) {
-  //     this->write_register_(REG_PAYLOAD_LENGTH, packet.size());
-  //   }
-  //   this->write_register_(REG_IRQ_FLAGS, 0xFF);
-  //   this->write_register_(REG_FIFO_ADDR_PTR, 0);
-  //   this->write_fifo_(packet);
-  //   this->set_mode_tx();
-  // } else {
-  //   this->set_mode_tx();
-  //   this->write_fifo_(packet);
-  // }
-  // uint32_t start = millis();
-  // while (!this->dio1_pin_->digital_read()) {
-  //   if (millis() - start > 4000) {
-  //     ESP_LOGE(TAG, "Transmit packet failure");
-  //     break;
-  //   }
-  // }
-  // if (this->rx_start_) {
-  //   this->set_mode_rx();
-  // } else {
-  //   this->set_mode_standby();
-  // }
+  if (this->payload_length_ > 0 && this->payload_length_ != packet.size()) {
+    ESP_LOGE(TAG, "Packet size does not match payload length");
+    return;
+  }
+  if (packet.empty() || packet.size() > 256) {
+    ESP_LOGE(TAG, "Packet size out of range");
+    return;
+  }
+  this->set_mode_standby();
+  if (this->payload_length_ == 0) {
+    this->set_packet_params_(packet.size());
+  }
+  this->write_fifo_(0x00, packet);
+  this->set_mode_tx();
+  uint32_t start = millis();
+  while (!this->dio1_pin_->digital_read()) {
+    if (millis() - start > 4000) {
+      ESP_LOGE(TAG, "Transmit packet failure");
+      break;
+    }
+  }
+  uint8_t buf[2];
+  buf[0] = 0xFF;
+  buf[1] = 0xFF;
+  this->write_opcode_(RADIO_CLR_IRQSTATUS, buf, 2);
+  if (this->rx_start_) {
+    this->set_mode_rx();
+  } else {
+    this->set_mode_standby();
+  }
 }
 
 void SX126x::loop() {
@@ -374,7 +380,25 @@ void SX126x::set_mode_(SX126xOpMode mode) {
 }
 
 void SX126x::set_mode_rx() {
-  uint8_t buf[3];
+  uint8_t buf[8];
+
+  // configure irq params
+  uint16_t irq =  IRQ_RX_DONE | IRQ_RX_TX_TIMEOUT | IRQ_CRC_ERROR;
+  buf[0] = (irq >> 8) & 0xFF;
+  buf[1] = (irq >> 0) & 0xFF;
+  buf[2] = (irq >> 8) & 0xFF;
+  buf[3] = (irq >> 0) & 0xFF;
+  buf[4] = (IRQ_RADIO_NONE >> 8) & 0xFF;
+  buf[5] = (IRQ_RADIO_NONE >> 0) & 0xFF;
+  buf[6] = (IRQ_RADIO_NONE >> 8) & 0xFF;
+  buf[7] = (IRQ_RADIO_NONE >> 0) & 0xFF;
+  this->write_opcode_(RADIO_SET_DIOIRQPARAMS, buf, 8);
+
+  // set timeout to 0
+  buf[0] = 0x00;
+  this->write_opcode_(RADIO_SET_LORASYMBTIMEOUT, buf, 1);
+
+  // switch to continuous mode rx
   buf[0] = 0xFF;
   buf[1] = 0xFF;
   buf[2] = 0xFF;
@@ -382,11 +406,25 @@ void SX126x::set_mode_rx() {
 }
 
 void SX126x::set_mode_tx() {
-  // this->set_mode_(MODE_TX);
-  // if (this->modulation_ == MOD_LORA) {
-  //   this->write_register_(REG_IRQ_FLAGS_MASK, 0x00);
-  //   this->write_register_(REG_DIO_MAPPING1, DIO0_MAPPING_01);
-  // }
+  uint8_t buf[8];
+
+  // configure irq params
+  uint16_t irq =  IRQ_TX_DONE | IRQ_RX_TX_TIMEOUT;
+  buf[0] = (irq >> 8) & 0xFF;
+  buf[1] = (irq >> 0) & 0xFF;
+  buf[2] = (irq >> 8) & 0xFF;
+  buf[3] = (irq >> 0) & 0xFF;
+  buf[4] = (IRQ_RADIO_NONE >> 8) & 0xFF;
+  buf[5] = (IRQ_RADIO_NONE >> 0) & 0xFF;
+  buf[6] = (IRQ_RADIO_NONE >> 8) & 0xFF;
+  buf[7] = (IRQ_RADIO_NONE >> 0) & 0xFF;
+  this->write_opcode_(RADIO_SET_DIOIRQPARAMS, buf, 8);
+
+  // switch to single mode tx
+  buf[0] = 0x00;
+  buf[1] = 0x00;
+  buf[2] = 0x00;
+  this->write_opcode_(RADIO_SET_TX, buf, 3);
 }
 
 void SX126x::set_mode_standby() {
