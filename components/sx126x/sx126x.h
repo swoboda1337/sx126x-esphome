@@ -68,6 +68,8 @@ class SX126x : public Component,
   void set_shaping(uint8_t shaping) { this->shaping_ = shaping; }
   void set_spreading_factor(uint8_t spreading_factor) { this->spreading_factor_ = spreading_factor; }
   void set_sync_value(const std::vector<uint8_t> &sync_value) { this->sync_value_ = sync_value; }
+  void set_tcxo_voltage(uint8_t tcxo_voltage) { this->tcxo_voltage_ = tcxo_voltage; }
+  void set_tcxo_delay(uint32_t tcxo_delay) { this->tcxo_delay_ = tcxo_delay; }
   void run_image_cal();
   void configure();
   void transmit_packet(const std::vector<uint8_t> &packet);
@@ -98,7 +100,9 @@ class SX126x : public Component,
   uint32_t deviation_;
   uint32_t frequency_;
   uint32_t payload_length_;
+  uint32_t tcxo_delay_;
   uint16_t preamble_size_;
+  uint8_t tcxo_voltage_;
   uint8_t coding_rate_;
   uint8_t modulation_;
   uint8_t pa_pin_;

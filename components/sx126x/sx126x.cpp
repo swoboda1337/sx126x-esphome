@@ -163,12 +163,14 @@ void SX126x::configure() {
   this->write_opcode_(RADIO_CLR_ERROR, buf, 2);
 
   // config tcxo
-  buf[0] = TCXO_CTRL_1_8V;
-  buf[1] = 0x00;
-  buf[2] = 0x02;
-  buf[3] = 0x40;
-  this->write_opcode_(RADIO_SET_TCXOMODE, buf, 4);
-  delayMicroseconds(5000);
+  if (this->tcxo_voltage_ != TCXO_CTRL_NONE) {
+    uint32_t delay = this->tcxo_delay_ >> 6;
+    buf[0] = this->tcxo_voltage_;
+    buf[1] = (delay >> 16) & 0xFF;
+    buf[2] = (delay >> 8) & 0xFF;
+    buf[3] = (delay >> 0) & 0xFF;
+    this->write_opcode_(RADIO_SET_TCXOMODE, buf, 4);
+  }
 
   // buf[0] = 0x7F;
   // this->write_opcode_(RADIO_CALIBRATE, buf, 1);

@@ -3,6 +3,7 @@ import esphome.codegen as cg
 from esphome.components import spi
 import esphome.config_validation as cv
 from esphome.const import CONF_DATA, CONF_FREQUENCY, CONF_ID
+from esphome.core import TimePeriod
 
 MULTI_CONF = True
 CODEOWNERS = ["@swoboda1337"]
@@ -31,11 +32,14 @@ CONF_RX_START = "rx_start"
 CONF_SHAPING = "shaping"
 CONF_SPREADING_FACTOR = "spreading_factor"
 CONF_SYNC_VALUE = "sync_value"
+CONF_TCXO_VOLTAGE = "tcxo_voltage"
+CONF_TCXO_DELAY = "tcxo_delay"
 
 sx126x_ns = cg.esphome_ns.namespace("sx126x")
 SX126x = sx126x_ns.class_("SX126x", cg.Component, spi.SPIDevice)
 SX126xBw = sx126x_ns.enum("SX126xBw")
 SX126xPacketType = sx126x_ns.enum("SX126xPacketType")
+SX126xTcxoCtrl =  sx126x_ns.enum("SX126xTcxoCtrl")
 SX126xPaConfig = sx126x_ns.enum("SX126xPaConfig")
 SX126xPaRamp = sx126x_ns.enum("SX126xPaRamp")
 SX126xLoraCr = sx126x_ns.enum("SX126xLoraCr")
@@ -81,6 +85,18 @@ MOD = {
 PA_PIN = {
     "RFO": SX126xPaConfig.PA_PIN_RFO,
     "BOOST": SX126xPaConfig.PA_PIN_BOOST,
+}
+
+TCXO_VOLTAGE = {
+    "1_6V": SX126xTcxoCtrl.TCXO_CTRL_1_6V,
+    "1_7V": SX126xTcxoCtrl.TCXO_CTRL_1_7V,
+    "1_8V": SX126xTcxoCtrl.TCXO_CTRL_1_8V,
+    "2_2V": SX126xTcxoCtrl.TCXO_CTRL_2_2V,
+    "2_4V": SX126xTcxoCtrl.TCXO_CTRL_2_4V,
+    "2_7V": SX126xTcxoCtrl.TCXO_CTRL_2_7V,
+    "3_0V": SX126xTcxoCtrl.TCXO_CTRL_3_0V,
+    "3_3V": SX126xTcxoCtrl.TCXO_CTRL_3_3V,
+    "NONE": SX126xTcxoCtrl.TCXO_CTRL_NONE,
 }
 
 RAMP = {
@@ -210,6 +226,11 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_SHAPING, default="NONE"): cv.enum(SHAPING),
             cv.Optional(CONF_SPREADING_FACTOR, default=7): cv.int_range(min=6, max=12),
             cv.Optional(CONF_SYNC_VALUE, default=[]): cv.ensure_list(cv.hex_uint8_t),
+            cv.Optional(CONF_TCXO_VOLTAGE, default="NONE"): cv.enum(TCXO_VOLTAGE),
+            cv.Optional(CONF_TCXO_DELAY, default="5ms"): cv.All(
+                cv.positive_time_period_microseconds,
+                cv.Range(max=TimePeriod(microseconds=262144000)),
+            ),
         },
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -265,6 +286,8 @@ async def to_code(config):
     cg.add(var.set_sync_value(config[CONF_SYNC_VALUE]))
     cg.add(var.set_rx_floor(config[CONF_RX_FLOOR]))
     cg.add(var.set_rx_start(config[CONF_RX_START]))
+    cg.add(var.set_tcxo_voltage(config[CONF_TCXO_VOLTAGE]))
+    cg.add(var.set_tcxo_delay(config[CONF_TCXO_DELAY]))
 
 
 SET_MODE_ACTION_SCHEMA = automation.maybe_simple_id(

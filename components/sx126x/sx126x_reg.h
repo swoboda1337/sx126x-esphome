@@ -105,17 +105,17 @@ enum SX126xIrqMasks : uint16_t {
 };
 
 
-typedef enum
-{
-    TCXO_CTRL_1_6V                          = 0x00,
-    TCXO_CTRL_1_7V                          = 0x01,
-    TCXO_CTRL_1_8V                          = 0x02,
-    TCXO_CTRL_2_2V                          = 0x03,
-    TCXO_CTRL_2_4V                          = 0x04,
-    TCXO_CTRL_2_7V                          = 0x05,
-    TCXO_CTRL_3_0V                          = 0x06,
-    TCXO_CTRL_3_3V                          = 0x07,
-}RadioTcxoCtrlVoltage_t;
+enum SX126xTcxoCtrl_t : uint8_t {
+  TCXO_CTRL_1_6V = 0x00,
+  TCXO_CTRL_1_7V = 0x01,
+  TCXO_CTRL_1_8V = 0x02,
+  TCXO_CTRL_2_2V = 0x03,
+  TCXO_CTRL_2_4V = 0x04,
+  TCXO_CTRL_2_7V = 0x05,
+  TCXO_CTRL_3_0V = 0x06,
+  TCXO_CTRL_3_3V = 0x07,
+  TCXO_CTRL_NONE = 0xFF,
+};
 
 
 /*!
