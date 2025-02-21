@@ -2,27 +2,35 @@ ESPHome SX126x driver.
 
 SX126x component configures SX1261, SX1262 or SX1268 hardware for use in ESPHome. Tested with the Heltec WiFi LoRa 32 V3 Dev-board with SX1262.
 
-To use this repo:
+To use this repo (example for Heltec V3):
 
 	external_components:
 	  - source: github://swoboda1337/sx126x-esphome@main
 	    components: [ sx126x ]
 
+	spi:
+	  clk_pin: GPIO9
+	  mosi_pin: GPIO10
+	  miso_pin: GPIO11
+
 	sx126x:
-	  dio0_pin: GPIO26
-	  cs_pin: GPIO18
-	  rst_pin: GPIO23
-	  pa_pin: BOOST
-	  pa_power: 4
+	  id: sx126x_id
+	  dio1_pin: GPIO14
+	  cs_pin: GPIO8
+	  busy_pin: GPIO13
+	  rst_pin: GPIO12
+	  pa_power: 3
 	  bandwidth: 125_0kHz
 	  crc_enable: true
 	  frequency: 433920000
 	  modulation: LORA
-	  rx_start: true
-	  sync_value: 0x33
+	  sync_value: 0x12
 	  preamble_size: 8
-	  spreading_factor: 12
+	  spreading_factor: 7
+	  sx1261: false
 	  coding_rate: CR_4_6
+	  tcxo_voltage: 1_8V
+	  tcxo_delay: 5ms
 	  on_packet:
 	    then:
 	      - lambda: |-
