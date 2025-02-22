@@ -51,6 +51,7 @@ class SX126x : public Component,
   void set_deviation(uint32_t deviation) { this->deviation_ = deviation; }
   void set_dio1_pin(InternalGPIOPin *dio1_pin) { this->dio1_pin_ = dio1_pin; }
   void set_frequency(uint32_t frequency) { this->frequency_ = frequency; }
+  void set_hw_version(std::string hw_version) { this->hw_version_ = hw_version; }
   void set_mode_rx();
   void set_mode_standby();
   void set_mode_tx();
@@ -64,10 +65,10 @@ class SX126x : public Component,
   void set_preamble_size(uint16_t preamble_size) { this->preamble_size_ = preamble_size; }
   void set_rst_pin(InternalGPIOPin *rst_pin) { this->rst_pin_ = rst_pin; }
   void set_rx_floor(float floor) { this->rx_floor_ = floor; }
-  void set_rx_start(bool start) { this->rx_start_ = start; }
+  void set_rx_start(bool rx_start) { this->rx_start_ = rx_start; }
+  void set_rf_switch(bool rf_switch) { this->rf_switch_ = rf_switch; }
   void set_shaping(uint8_t shaping) { this->shaping_ = shaping; }
   void set_spreading_factor(uint8_t spreading_factor) { this->spreading_factor_ = spreading_factor; }
-  void set_sx1261(uint8_t sx1261) { this->sx1261_ = sx1261; }
   void set_sync_value(const std::vector<uint8_t> &sync_value) { this->sync_value_ = sync_value; }
   void set_tcxo_voltage(uint8_t tcxo_voltage) { this->tcxo_voltage_ = tcxo_voltage; }
   void set_tcxo_delay(uint32_t tcxo_delay) { this->tcxo_delay_ = tcxo_delay; }
@@ -96,6 +97,7 @@ class SX126x : public Component,
   InternalGPIOPin *busy_pin_{nullptr};
   InternalGPIOPin *dio1_pin_{nullptr};
   InternalGPIOPin *rst_pin_{nullptr};
+  std::string hw_version_;
   SX126xBw bandwidth_;
   char version_[16];
   uint32_t bitrate_;
@@ -117,8 +119,8 @@ class SX126x : public Component,
   float rx_floor_;
   bool bitsync_;
   bool crc_enable_;
-  bool sx1261_;
   bool rx_start_;
+  bool rf_switch_;
 };
 
 }  // namespace sx126x

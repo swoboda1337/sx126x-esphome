@@ -64,7 +64,6 @@ uint8_t SX126x::read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
   for(int i = 0; i < size; i++) {
     data[i] = this->transfer_byte(0x00);
   }
-  // this->read_array(data, size);
   this->disable();
   this->wait_busy_();
   return status;
@@ -88,7 +87,9 @@ void SX126x::read_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
   this->write_byte(0x00);
-  this->read_array(data, size);
+  for(int i = 0; i < size; i++) {
+     data[i] = this->transfer_byte(0x00);
+  }
   this->disable();
   this->wait_busy_();
 }
@@ -99,7 +100,9 @@ void SX126x::write_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->write_byte(RADIO_WRITE_REGISTER);
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
-  this->write_array(data, size);
+  for(int i = 0; i < size; i++) {
+     this->transfer_byte(data[i]);
+  }
   this->disable();
   this->wait_busy_();
 }
@@ -173,6 +176,12 @@ void SX126x::configure() {
     this->write_opcode_(RADIO_SET_TCXOMODE, buf, 4);
   }
 
+  // rf switch
+  if (this->rf_switch_) {
+    buf[0] = 0x01;
+    this->write_opcode_(RADIO_SET_RFSWITCHMODE, buf, 1);
+  }
+
   // buf[0] = 0x7F;
   // this->write_opcode_(RADIO_CALIBRATE, buf, 1);
 
@@ -180,6 +189,9 @@ void SX126x::configure() {
 
     // buf[0] = 0x01;
     // this->write_opcode_(RADIO_SET_RFSWITCHMODE, buf, 1);
+
+
+
 
       // this->read_opcode_(RADIO_GET_STATUS, buf, 1);
       // ESP_LOGE(TAG, "status %02x", buf[0]);
@@ -232,7 +244,6 @@ void SX126x::configure() {
   // }
   // this->write_opcode_(RADIO_CALIBRATEIMAGE, buf, 2);
 
-
   uint64_t freq = ((uint64_t) this->frequency_ << 25) / XTAL_FREQ;
   buf[0] = (uint8_t) ((freq >> 24) & 0xFF);
   buf[1] = (uint8_t) ((freq >> 16) & 0xFF);
@@ -242,7 +253,7 @@ void SX126x::configure() {
 
   // configure pa
   int8_t pa_power = this->pa_power_;
-  if (this->sx1261_) {
+  if (this->hw_version_ == "sx1261") {
     if (pa_power == 15) {
       uint8_t cfg[4] = {0x06, 0x00, 0x01, 0x01};
       this->write_opcode_(RADIO_SET_PACONFIG, cfg, 4);

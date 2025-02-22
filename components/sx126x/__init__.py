@@ -16,6 +16,7 @@ CONF_CODING_RATE = "coding_rate"
 CONF_CRC_ENABLE = "crc_enable"
 CONF_DEVIATION = "deviation"
 CONF_DIO1_PIN = "dio1_pin"
+CONF_HW_VERSION = "hw_version"
 CONF_MODULATION = "modulation"
 CONF_ON_PACKET = "on_packet"
 CONF_PA_PIN = "pa_pin"
@@ -29,9 +30,9 @@ CONF_RST_PIN = "rst_pin"
 CONF_BUSY_PIN = "busy_pin"
 CONF_RX_FLOOR = "rx_floor"
 CONF_RX_START = "rx_start"
+CONF_RF_SWITCH = "rf_switch"
 CONF_SHAPING = "shaping"
 CONF_SPREADING_FACTOR = "spreading_factor"
-CONF_SX1261 = "sx1261"
 CONF_SYNC_VALUE = "sync_value"
 CONF_TCXO_VOLTAGE = "tcxo_voltage"
 CONF_TCXO_DELAY = "tcxo_delay"
@@ -210,6 +211,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_DEVIATION, default=5000): cv.int_range(min=0, max=100000),
             cv.Optional(CONF_DIO1_PIN): pins.internal_gpio_input_pin_schema,
             cv.Required(CONF_FREQUENCY): cv.int_range(min=137000000, max=1020000000),
+            cv.Required(CONF_HW_VERSION): cv.one_of("sx1261", "sx1262", "sx1268", lower=True),
             cv.Required(CONF_MODULATION): cv.enum(MOD),
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
             cv.Optional(CONF_PA_PIN, default="BOOST"): cv.enum(PA_PIN),
@@ -224,9 +226,9 @@ CONFIG_SCHEMA = cv.All(
             cv.Required(CONF_RST_PIN): pins.internal_gpio_output_pin_schema,
             cv.Optional(CONF_RX_FLOOR, default=-94): cv.float_range(min=-128, max=-1),
             cv.Optional(CONF_RX_START, default=True): cv.boolean,
+            cv.Required(CONF_RF_SWITCH): cv.boolean,
             cv.Optional(CONF_SHAPING, default="NONE"): cv.enum(SHAPING),
             cv.Optional(CONF_SPREADING_FACTOR, default=7): cv.int_range(min=6, max=12),
-            cv.Optional(CONF_SX1261, default=False): cv.boolean,
             cv.Optional(CONF_SYNC_VALUE, default=[]): cv.ensure_list(cv.hex_uint8_t),
             cv.Optional(CONF_TCXO_VOLTAGE, default="NONE"): cv.enum(TCXO_VOLTAGE),
             cv.Optional(CONF_TCXO_DELAY, default="5ms"): cv.All(
@@ -264,6 +266,7 @@ async def to_code(config):
     cg.add(var.set_busy_pin(busy_pin))
     cg.add(var.set_bandwidth(config[CONF_BANDWIDTH]))
     cg.add(var.set_frequency(config[CONF_FREQUENCY]))
+    cg.add(var.set_hw_version(config[CONF_HW_VERSION]))
     cg.add(var.set_deviation(config[CONF_DEVIATION]))
     cg.add(var.set_modulation(config[CONF_MODULATION]))
     cg.add(var.set_pa_pin(config[CONF_PA_PIN]))
@@ -285,10 +288,10 @@ async def to_code(config):
     cg.add(var.set_preamble_errors(config[CONF_PREAMBLE_ERRORS]))
     cg.add(var.set_coding_rate(config[CONF_CODING_RATE]))
     cg.add(var.set_spreading_factor(config[CONF_SPREADING_FACTOR]))
-    cg.add(var.set_sx1261(config[CONF_SX1261]))
     cg.add(var.set_sync_value(config[CONF_SYNC_VALUE]))
     cg.add(var.set_rx_floor(config[CONF_RX_FLOOR]))
     cg.add(var.set_rx_start(config[CONF_RX_START]))
+    cg.add(var.set_rf_switch(config[CONF_RF_SWITCH]))
     cg.add(var.set_tcxo_voltage(config[CONF_TCXO_VOLTAGE]))
     cg.add(var.set_tcxo_delay(config[CONF_TCXO_DELAY]))
 

@@ -27,8 +27,9 @@ To use this repo (example for Heltec V3):
 	  sync_value: 0x12
 	  preamble_size: 8
 	  spreading_factor: 7
-	  sx1261: false
 	  coding_rate: CR_4_6
+	  hw_version: sx1262
+	  rf_switch: true
 	  tcxo_voltage: 1_8V
 	  tcxo_delay: 5ms
 	  on_packet:
