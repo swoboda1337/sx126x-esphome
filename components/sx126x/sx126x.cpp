@@ -355,12 +355,12 @@ void SX126x::loop() {
     if ((status & IRQ_RX_DONE) == IRQ_RX_DONE) {
       if ((status & IRQ_CRC_ERROR) != IRQ_CRC_ERROR) {
         this->read_opcode_(RADIO_GET_PACKETSTATUS, buf, 3);
-        if (this->modulation_ == PACKET_TYPE_GFSK) {
-          rssi  = buf[2];
-          snr = 0;
-        } else {
+        if (this->modulation_ == PACKET_TYPE_LORA) {
           rssi  = buf[0];
           snr  = buf[1];
+        } else {
+          rssi  = buf[2];
+          snr = 0;
         }
         this->read_opcode_(RADIO_GET_RXBUFFERSTATUS, buf, 2);
         std::vector<uint8_t> packet(buf[0]);
