@@ -348,14 +348,24 @@ void SX126x::loop() {
   if (this->dio1_pin_->digital_read()) {
     uint16_t status;
     uint8_t buf[3];
+    uint8_t rssi;
+    int8_t snr;
     this->read_opcode_(RADIO_GET_IRQSTATUS, buf, 2);
     status = (buf[0] << 8) | buf[1];
     if ((status & IRQ_RX_DONE) == IRQ_RX_DONE) {
       if ((status & IRQ_CRC_ERROR) != IRQ_CRC_ERROR) {
+        this->read_opcode_(RADIO_GET_PACKETSTATUS, buf, 3);
+        if (this->modulation_ == PACKET_TYPE_GFSK) {
+          rssi  = buf[2];
+          snr = 0;
+        } else {
+          rssi  = buf[0];
+          snr  = buf[1];
+        }
         this->read_opcode_(RADIO_GET_RXBUFFERSTATUS, buf, 2);
         std::vector<uint8_t> packet(buf[0]);
         this->read_fifo_(buf[1], packet);
-        this->packet_trigger_->trigger(packet, 0.0f, 0.0f);
+        this->packet_trigger_->trigger(packet, (float) rssi / -2.0f, (float) snr / 4.0f);
       }
     }
     buf[0] = (status >> 8) & 0xFF;
