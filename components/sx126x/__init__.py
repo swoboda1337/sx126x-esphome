@@ -11,7 +11,6 @@ DEPENDENCIES = ["spi"]
 
 CONF_BANDWIDTH = "bandwidth"
 CONF_BITRATE = "bitrate"
-CONF_BITSYNC = "bitsync"
 CONF_CODING_RATE = "coding_rate"
 CONF_CRC_ENABLE = "crc_enable"
 CONF_DEVIATION = "deviation"
@@ -26,7 +25,6 @@ CONF_PREAMBLE_DETECT = "preamble_detect"
 CONF_PREAMBLE_SIZE = "preamble_size"
 CONF_RST_PIN = "rst_pin"
 CONF_BUSY_PIN = "busy_pin"
-CONF_RX_FLOOR = "rx_floor"
 CONF_RX_START = "rx_start"
 CONF_RF_SWITCH = "rf_switch"
 CONF_SHAPING = "shaping"
@@ -87,8 +85,7 @@ CODING_RATE = {
 
 MOD = {
     "LORA": SX126xPacketType.PACKET_TYPE_LORA,
-    "GFSK": SX126xPacketType.PACKET_TYPE_GFSK,
-    "LRHSS": SX126xPacketType.PACKET_TYPE_LRHSS,
+    "FSK": SX126xPacketType.PACKET_TYPE_GFSK,
 }
 
 TCXO_VOLTAGE = {
@@ -172,18 +169,9 @@ def validate_config(config):
                 f"Bandwidth {config[CONF_BANDWIDTH]} is not available with FSK"
             )
         if config[CONF_PAYLOAD_LENGTH] > 64:
-            raise cv.Invalid("Payload length must be >= 64 with FSK/OOK")
-        if config[CONF_PAYLOAD_LENGTH] > 0 and CONF_DIO1_PIN not in config:
-            raise cv.Invalid("Cannot use packet mode without dio1_pin")
-        if CONF_BITRATE not in config:
-            if config[CONF_PAYLOAD_LENGTH] > 0:
-                raise cv.Invalid("Cannot use packet mode without setting bitrate")
-            if CONF_BITSYNC in config and config[CONF_BITSYNC]:
-                raise cv.Invalid("Bitsync is true but bitrate is not configured")
-        elif CONF_BITSYNC not in config:
-            raise cv.Invalid(
-                "Bitrate is configured but not bitsync; add 'bitsync: true'"
-            )
+            raise cv.Invalid("Payload length must be <= 64 with FSK")
+        if config[CONF_PREAMBLE_DETECT] > len(config[CONF_SYNC_VALUE]):
+            raise cv.Invalid("Preamble detection length must be <= sync value length")
     return config
 
 
@@ -192,13 +180,12 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(): cv.declare_id(SX126x),
             cv.Optional(CONF_BANDWIDTH, default="125_0kHz"): cv.enum(BW),
-            cv.Optional(CONF_BITRATE): cv.int_range(min=500, max=300000),
-            cv.Optional(CONF_BITSYNC): cv.boolean,
+            cv.Optional(CONF_BITRATE, default=4800): cv.int_range(min=600, max=300000),
             cv.Required(CONF_BUSY_PIN): pins.internal_gpio_output_pin_schema,
             cv.Optional(CONF_CODING_RATE, default="CR_4_5"): cv.enum(CODING_RATE),
             cv.Optional(CONF_CRC_ENABLE, default=False): cv.boolean,
             cv.Optional(CONF_DEVIATION, default=5000): cv.int_range(min=0, max=100000),
-            cv.Optional(CONF_DIO1_PIN): pins.internal_gpio_input_pin_schema,
+            cv.Required(CONF_DIO1_PIN): pins.internal_gpio_input_pin_schema,
             cv.Required(CONF_FREQUENCY): cv.int_range(min=137000000, max=1020000000),
             cv.Required(CONF_HW_VERSION): cv.one_of(
                 "sx1261", "sx1262", "sx1268", lower=True
@@ -207,11 +194,10 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
             cv.Optional(CONF_PA_POWER, default=17): cv.int_range(min=0, max=17),
             cv.Optional(CONF_PA_RAMP, default="40us"): cv.enum(RAMP),
-            cv.Optional(CONF_PAYLOAD_LENGTH, default=0): cv.int_range(min=0, max=256),
+            cv.Required(CONF_PAYLOAD_LENGTH): cv.int_range(min=0, max=256),
             cv.Optional(CONF_PREAMBLE_DETECT, default=2): cv.int_range(min=0, max=4),
-            cv.Optional(CONF_PREAMBLE_SIZE, default=0): cv.int_range(min=0, max=65535),
+            cv.Required(CONF_PREAMBLE_SIZE): cv.int_range(min=1, max=65535),
             cv.Required(CONF_RST_PIN): pins.internal_gpio_output_pin_schema,
-            cv.Optional(CONF_RX_FLOOR, default=-94): cv.float_range(min=-128, max=-1),
             cv.Optional(CONF_RX_START, default=True): cv.boolean,
             cv.Required(CONF_RF_SWITCH): cv.boolean,
             cv.Optional(CONF_SHAPING, default="NONE"): cv.enum(SHAPING),
@@ -259,14 +245,7 @@ async def to_code(config):
     cg.add(var.set_pa_ramp(config[CONF_PA_RAMP]))
     cg.add(var.set_pa_power(config[CONF_PA_POWER]))
     cg.add(var.set_shaping(config[CONF_SHAPING]))
-    if CONF_BITRATE in config:
-        cg.add(var.set_bitrate(config[CONF_BITRATE]))
-    else:
-        cg.add(var.set_bitrate(4800))
-    if CONF_BITSYNC in config:
-        cg.add(var.set_bitsync(config[CONF_BITSYNC]))
-    else:
-        cg.add(var.set_bitsync(False))
+    cg.add(var.set_bitrate(config[CONF_BITRATE]))
     cg.add(var.set_crc_enable(config[CONF_CRC_ENABLE]))
     cg.add(var.set_payload_length(config[CONF_PAYLOAD_LENGTH]))
     cg.add(var.set_preamble_size(config[CONF_PREAMBLE_SIZE]))
@@ -274,7 +253,6 @@ async def to_code(config):
     cg.add(var.set_coding_rate(config[CONF_CODING_RATE]))
     cg.add(var.set_spreading_factor(config[CONF_SPREADING_FACTOR]))
     cg.add(var.set_sync_value(config[CONF_SYNC_VALUE]))
-    cg.add(var.set_rx_floor(config[CONF_RX_FLOOR]))
     cg.add(var.set_rx_start(config[CONF_RX_START]))
     cg.add(var.set_rf_switch(config[CONF_RF_SWITCH]))
     cg.add(var.set_tcxo_voltage(config[CONF_TCXO_VOLTAGE]))

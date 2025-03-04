@@ -248,13 +248,36 @@ void SX126x::configure() {
     buf[3] = (duration > 16.38f) ? 0x01 : 0x00;
     this->write_opcode_(RADIO_SET_MODULATIONPARAMS, buf, 4);
 
+    // set packet params and sync word
     this->set_packet_params_(this->payload_length_);
+    if (this->sync_value_.size() == 2) {
+      for (uint32_t i = 0; i < this->sync_value_.size(); i++) {
+        uint8_t data = this->sync_value_[i];
+        this->write_register_(REG_LORA_SYNCWORD + i, &data, 1);
+      }
+    }
+  } else {
+    // set modulation params
+    uint32_t bitrate = ((uint64_t) XTAL_FREQ * 32) / this->bitrate_;
+    uint32_t fdev = ((uint64_t) this->deviation_ << 25) / XTAL_FREQ;
+    buf[0] = (bitrate >> 16) & 0xFF;
+    buf[1] = (bitrate >> 8) & 0xFF;
+    buf[2] = (bitrate >> 0) & 0xFF;
+    buf[3] = this->shaping_;
+    buf[4] = BW_FSK[this->bandwidth_ - SX126X_BW_4800];
+    buf[5] = (fdev >> 16) & 0xFF;
+    buf[6] = (fdev >> 8) & 0xFF;
+    buf[7] = (fdev >> 0) & 0xFF;
+    this->write_opcode_(RADIO_SET_MODULATIONPARAMS, buf, 8);
 
-    // write sync word
-    buf[0] = 0x14;
-    this->write_register_(REG_LORA_SYNCWORD + 0, buf, 1);
-    buf[0] = 0x24;
-    this->write_register_(REG_LORA_SYNCWORD + 1, buf, 1);
+    // set packet params and sync word
+    this->set_packet_params_(this->payload_length_);
+    if (this->sync_value_.size() > 0) {
+      for (uint32_t i = 0; i < this->sync_value_.size(); i++) {
+        uint8_t data = this->sync_value_[i];
+        this->write_register_(REG_GFSK_SYNCWORD + i, &data, 1);
+      }
+    }
   }
 
   // switch to rx or standby
@@ -266,14 +289,28 @@ void SX126x::configure() {
 }
 
 void SX126x::set_packet_params_(uint8_t payload_length) {
-  uint8_t buf[6];
-  buf[0] = (this->preamble_size_ >> 8) & 0xFF;
-  buf[1] = (this->preamble_size_ >> 0) & 0xFF;
-  buf[2] = (this->payload_length_ > 0) ? 0x01 : 0x00;
-  buf[3] = payload_length;
-  buf[4] = (this->crc_enable_) ? 0x01 : 0x00;
-  buf[5] = 0x00;
-  this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 6);
+  uint8_t buf[9];
+  if (this->modulation_ == PACKET_TYPE_LORA) {
+    buf[0] = (this->preamble_size_ >> 8) & 0xFF;
+    buf[1] = (this->preamble_size_ >> 0) & 0xFF;
+    buf[2] = (this->payload_length_ > 0) ? 0x01 : 0x00;
+    buf[3] = payload_length;
+    buf[4] = (this->crc_enable_) ? 0x01 : 0x00;
+    buf[5] = 0x00;
+    this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 6);
+  } else {
+    uint16_t preamble_size = this->preamble_size_ * 8;
+    buf[0] = (preamble_size >> 8) & 0xFF;
+    buf[1] = (preamble_size >> 0) & 0xFF;
+    buf[2] = (this->preamble_detect_ > 0) ? ((this->preamble_detect_ - 1) | 0x04) : 0x00;
+    buf[3] = this->sync_value_.size() * 8;
+    buf[4] = 0x00;
+    buf[5] = 0x00;
+    buf[6] = this->payload_length_;
+    buf[7] = this->crc_enable_ ? 0x02 : 0x01;
+    buf[8] = 0x00;
+    this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 9);
+  }
 }
 
 void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {

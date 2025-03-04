@@ -73,7 +73,6 @@ class SX126x : public Component,
   void set_preamble_detect(uint16_t preamble_detect) { this->preamble_detect_ = preamble_detect; }
   void set_preamble_size(uint16_t preamble_size) { this->preamble_size_ = preamble_size; }
   void set_rst_pin(InternalGPIOPin *rst_pin) { this->rst_pin_ = rst_pin; }
-  void set_rx_floor(float floor) { this->rx_floor_ = floor; }
   void set_rx_start(bool rx_start) { this->rx_start_ = rx_start; }
   void set_rf_switch(bool rf_switch) { this->rf_switch_ = rf_switch; }
   void set_shaping(uint8_t shaping) { this->shaping_ = shaping; }
@@ -121,7 +120,6 @@ class SX126x : public Component,
   uint8_t pa_ramp_;
   uint8_t shaping_;
   uint8_t spreading_factor_;
-  float rx_floor_;
   bool bitsync_;
   bool crc_enable_;
   bool rx_start_;
