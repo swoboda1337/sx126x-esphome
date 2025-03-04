@@ -229,29 +229,23 @@ enum SX126xPaConfig : uint8_t {
   PA_MAX_POWER = 0x70,
 };
 
-enum SX126xPaRamp : uint8_t {
-  CUTOFF_BR_X_2 = 0x40,
-  CUTOFF_BR_X_1 = 0x20,
-  GAUSSIAN_BT_0_3 = 0x60,
-  GAUSSIAN_BT_0_5 = 0x40,
-  GAUSSIAN_BT_1_0 = 0x20,
-  SHAPING_NONE = 0x00,
-  PA_RAMP_10 = 0x0F,
-  PA_RAMP_12 = 0x0E,
-  PA_RAMP_15 = 0x0D,
-  PA_RAMP_20 = 0x0C,
-  PA_RAMP_25 = 0x0B,
-  PA_RAMP_31 = 0x0A,
-  PA_RAMP_40 = 0x09,
-  PA_RAMP_50 = 0x08,
-  PA_RAMP_62 = 0x07,
-  PA_RAMP_100 = 0x06,
-  PA_RAMP_125 = 0x05,
-  PA_RAMP_250 = 0x04,
-  PA_RAMP_500 = 0x03,
-  PA_RAMP_1000 = 0x02,
-  PA_RAMP_2000 = 0x01,
-  PA_RAMP_3400 = 0x00,
+enum SX126xPulseShape : uint8_t {
+  NO_FILTER = 0x00,
+  GAUSSIAN_BT_0_3 = 0x08,
+  GAUSSIAN_BT_0_5 = 0x09,
+  GAUSSIAN_BT_0_7 = 0x0A,
+  GAUSSIAN_BT_1_0 = 0x0B,
+};
+
+enum SX126xRampTime : uint8_t {
+  PA_RAMP_10 = 0x00,
+  PA_RAMP_20 = 0x01,
+  PA_RAMP_40 = 0x02,
+  PA_RAMP_80 = 0x03,
+  PA_RAMP_200 = 0x04,
+  PA_RAMP_800 = 0x05,
+  PA_RAMP_1700 = 0x06,
+  PA_RAMP_3400 = 0x07,
 };
 
 enum SX126xDioMapping1 : uint8_t {

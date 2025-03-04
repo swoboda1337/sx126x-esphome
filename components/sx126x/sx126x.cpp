@@ -8,7 +8,7 @@ namespace sx126x {
 
 static const char *const TAG = "sx126x";
 static const uint32_t FXOSC = 32000000u;
-static const uint16_t RAMP[16] = {3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10};
+static const uint16_t RAMP[8] = {10, 20, 40, 80, 200, 800, 1700, 3400};
 static const uint32_t BW_HZ[22] = {2604,  3125,  3906,  5208,  6250,  7812,   10416,  12500,  15625,  20833,  25000,
                                    31250, 41666, 50000, 62500, 83333, 100000, 125000, 166666, 200000, 250000, 500000};
 static const uint8_t BW_LORA[22] = {LORA_BW_7,   LORA_BW_7,   LORA_BW_7,   LORA_BW_7,   LORA_BW_7,   LORA_BW_7,  LORA_BW_10, LORA_BW_15,
@@ -476,21 +476,19 @@ void SX126x::dump_config() {
   ESP_LOGCONFIG(TAG, "  PA Pin: %s", this->pa_pin_ == PA_PIN_BOOST ? "BOOST" : "RFO");
   ESP_LOGCONFIG(TAG, "  PA Power: %" PRIu32 " dBm", this->pa_power_);
   ESP_LOGCONFIG(TAG, "  PA Ramp: %" PRIu16 " us", RAMP[this->pa_ramp_]);
-  if (this->shaping_ == CUTOFF_BR_X_2) {
-    ESP_LOGCONFIG(TAG, "  Shaping: CUTOFF_BR_X_2");
-  } else if (this->shaping_ == CUTOFF_BR_X_1) {
-    ESP_LOGCONFIG(TAG, "  Shaping: CUTOFF_BR_X_1");
-  } else if (this->shaping_ == GAUSSIAN_BT_0_3) {
-    ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_3");
-  } else if (this->shaping_ == GAUSSIAN_BT_0_5) {
-    ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_5");
-  } else if (this->shaping_ == GAUSSIAN_BT_1_0) {
-    ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_1_0");
-  } else {
-    ESP_LOGCONFIG(TAG, "  Shaping: NONE");
-  }
   if (this->modulation_ == MOD_FSK) {
     ESP_LOGCONFIG(TAG, "  Deviation: %" PRIu32 " Hz", this->deviation_);
+    if (this->shaping_ == GAUSSIAN_BT_0_3) {
+      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_3");
+    } else if (this->shaping_ == GAUSSIAN_BT_0_5) {
+      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_5");
+    } else if (this->shaping_ == GAUSSIAN_BT_0_7) {
+      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_7");
+    } else if (this->shaping_ == GAUSSIAN_BT_1_0) {
+      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_1_0");
+    } else {
+      ESP_LOGCONFIG(TAG, "  Shaping: NONE");
+    }
   }
   if (this->modulation_ == PACKET_TYPE_LORA) {
     ESP_LOGCONFIG(TAG, "  Modulation: %s", "LORA");

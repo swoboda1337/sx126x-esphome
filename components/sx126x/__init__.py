@@ -42,7 +42,8 @@ SX126xBw = sx126x_ns.enum("SX126xBw")
 SX126xPacketType = sx126x_ns.enum("SX126xPacketType")
 SX126xTcxoCtrl =  sx126x_ns.enum("SX126xTcxoCtrl")
 SX126xPaConfig = sx126x_ns.enum("SX126xPaConfig")
-SX126xPaRamp = sx126x_ns.enum("SX126xPaRamp")
+SX126xRampTime = sx126x_ns.enum("SX126xRampTime")
+SX126xPulseShape = sx126x_ns.enum("SX126xPulseShape")
 SX126xLoraCr = sx126x_ns.enum("SX126xLoraCr")
 
 BW = {
@@ -101,31 +102,22 @@ TCXO_VOLTAGE = {
 }
 
 RAMP = {
-    "10us": SX126xPaRamp.PA_RAMP_10,
-    "12us": SX126xPaRamp.PA_RAMP_12,
-    "15us": SX126xPaRamp.PA_RAMP_15,
-    "20us": SX126xPaRamp.PA_RAMP_20,
-    "25us": SX126xPaRamp.PA_RAMP_25,
-    "31us": SX126xPaRamp.PA_RAMP_31,
-    "40us": SX126xPaRamp.PA_RAMP_40,
-    "50us": SX126xPaRamp.PA_RAMP_50,
-    "62us": SX126xPaRamp.PA_RAMP_62,
-    "100us": SX126xPaRamp.PA_RAMP_100,
-    "125us": SX126xPaRamp.PA_RAMP_125,
-    "250us": SX126xPaRamp.PA_RAMP_250,
-    "500us": SX126xPaRamp.PA_RAMP_500,
-    "1000us": SX126xPaRamp.PA_RAMP_1000,
-    "2000us": SX126xPaRamp.PA_RAMP_2000,
-    "3400us": SX126xPaRamp.PA_RAMP_3400,
+    "10us": SX126xRampTime.PA_RAMP_10,
+    "20us": SX126xRampTime.PA_RAMP_20,
+    "40us": SX126xRampTime.PA_RAMP_40,
+    "80us": SX126xRampTime.PA_RAMP_80,
+    "200us": SX126xRampTime.PA_RAMP_200,
+    "800us": SX126xRampTime.PA_RAMP_800,
+    "1700us": SX126xRampTime.PA_RAMP_1700,
+    "3400us": SX126xRampTime.PA_RAMP_3400,
 }
 
 SHAPING = {
-    "CUTOFF_BR_X_2": SX126xPaRamp.CUTOFF_BR_X_2,
-    "CUTOFF_BR_X_1": SX126xPaRamp.CUTOFF_BR_X_1,
-    "GAUSSIAN_BT_0_3": SX126xPaRamp.GAUSSIAN_BT_0_3,
-    "GAUSSIAN_BT_0_5": SX126xPaRamp.GAUSSIAN_BT_0_5,
-    "GAUSSIAN_BT_1_0": SX126xPaRamp.GAUSSIAN_BT_1_0,
-    "NONE": SX126xPaRamp.SHAPING_NONE,
+    "GAUSSIAN_BT_0_3": SX126xPulseShape.GAUSSIAN_BT_0_3,
+    "GAUSSIAN_BT_0_5": SX126xPulseShape.GAUSSIAN_BT_0_5,
+    "GAUSSIAN_BT_0_7": SX126xPulseShape.GAUSSIAN_BT_0_7,
+    "GAUSSIAN_BT_1_0": SX126xPulseShape.GAUSSIAN_BT_1_0,
+    "NONE": SX126xPulseShape.NO_FILTER,
 }
 
 SendPacketAction = sx126x_ns.class_(
