@@ -507,20 +507,15 @@ void SX126x::dump_config() {
     if (!this->sync_value_.empty()) {
       ESP_LOGCONFIG(TAG, "  Sync Value: 0x%02x", this->sync_value_[0]);
     }
-    if (this->preamble_size_ > 0) {
-      ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
-    }
+    ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
   } else {
     ESP_LOGCONFIG(TAG, "  Modulation: %s", this->modulation_ == MOD_FSK ? "FSK" : "OOK");
     ESP_LOGCONFIG(TAG, "  Bitrate: %" PRIu32 "b/s", this->bitrate_);
     ESP_LOGCONFIG(TAG, "  Bitsync: %s", TRUEFALSE(this->bitsync_));
     ESP_LOGCONFIG(TAG, "  Rx Start: %s", TRUEFALSE(this->rx_start_));
     ESP_LOGCONFIG(TAG, "  Rx Floor: %.1f dBm", this->rx_floor_);
-    if (this->preamble_size_ > 0) {
-      ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
-      ESP_LOGCONFIG(TAG, "  Preamble Polarity: 0x%X", this->preamble_polarity_);
-      ESP_LOGCONFIG(TAG, "  Preamble Errors: %" PRIu8, this->preamble_errors_);
-    }
+    ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
+    ESP_LOGCONFIG(TAG, "  Preamble Detect: %" PRIu16, this->preamble_detect_);
     if (!this->sync_value_.empty()) {
       ESP_LOGCONFIG(TAG, "  Sync Value: 0x%s", format_hex(this->sync_value_).c_str());
     }

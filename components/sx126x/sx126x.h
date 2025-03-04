@@ -60,8 +60,7 @@ class SX126x : public Component,
   void set_pa_power(uint8_t power) { this->pa_power_ = power; }
   void set_pa_ramp(uint8_t ramp) { this->pa_ramp_ = ramp; }
   void set_payload_length(uint8_t payload_length) { this->payload_length_ = payload_length; }
-  void set_preamble_errors(uint8_t preamble_errors) { this->preamble_errors_ = preamble_errors; }
-  void set_preamble_polarity(uint8_t preamble_polarity) { this->preamble_polarity_ = preamble_polarity; }
+  void set_preamble_detect(uint16_t preamble_detect) { this->preamble_detect_ = preamble_detect; }
   void set_preamble_size(uint16_t preamble_size) { this->preamble_size_ = preamble_size; }
   void set_rst_pin(InternalGPIOPin *rst_pin) { this->rst_pin_ = rst_pin; }
   void set_rx_floor(float floor) { this->rx_floor_ = floor; }
@@ -105,6 +104,7 @@ class SX126x : public Component,
   uint32_t frequency_;
   uint32_t payload_length_;
   uint32_t tcxo_delay_;
+  uint16_t preamble_detect_;
   uint16_t preamble_size_;
   uint8_t tcxo_voltage_;
   uint8_t coding_rate_;
@@ -112,8 +112,6 @@ class SX126x : public Component,
   uint8_t pa_pin_;
   uint8_t pa_power_;
   uint8_t pa_ramp_;
-  uint8_t preamble_errors_;
-  uint8_t preamble_polarity_;
   uint8_t shaping_;
   uint8_t spreading_factor_;
   float rx_floor_;
