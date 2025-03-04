@@ -9,14 +9,15 @@ namespace sx126x {
 static const char *const TAG = "sx126x";
 static const uint32_t FXOSC = 32000000u;
 static const uint16_t RAMP[8] = {10, 20, 40, 80, 200, 800, 1700, 3400};
-static const uint32_t BW_HZ[31] = {4800, 5800, 7300, 9700, 11700, 14600, 19500, 23400, 29300, 39000, 46900, 58600, 78200, 93800,
-                                   117300, 156200, 187200, 234300, 312000, 373600, 467000, 7810, 10420, 15630, 20830, 31250, 41670,
-                                   62500, 125000, 250000, 500000};
-static const uint8_t BW_LORA[10] = {LORA_BW_7810, LORA_BW_10420, LORA_BW_15630, LORA_BW_20830, LORA_BW_31250, LORA_BW_41670,
-                                    LORA_BW_62500, LORA_BW_125000, LORA_BW_250000, LORA_BW_500000};
-static const uint8_t BW_FSK[21] = {FSK_BW_4800, FSK_BW_5800, FSK_BW_7300, FSK_BW_9700, FSK_BW_11700, FSK_BW_14600, FSK_BW_19500,
-                                   FSK_BW_23400, FSK_BW_29300, FSK_BW_39000, FSK_BW_46900, FSK_BW_58600, FSK_BW_78200, FSK_BW_93800,
-                                   FSK_BW_117300, FSK_BW_156200, FSK_BW_187200, FSK_BW_234300, FSK_BW_312000, FSK_BW_373600, FSK_BW_467000};
+static const uint32_t BW_HZ[31] = {4800,  5800,  7300,  9700,   11700,  14600,  19500,  23400,  29300,  39000,  46900,
+                                   58600, 78200, 93800, 117300, 156200, 187200, 234300, 312000, 373600, 467000, 7810,
+                                   10420, 15630, 20830, 31250,  41670,  62500,  125000, 250000, 500000};
+static const uint8_t BW_LORA[10] = {LORA_BW_7810,  LORA_BW_10420, LORA_BW_15630,  LORA_BW_20830,  LORA_BW_31250,
+                                    LORA_BW_41670, LORA_BW_62500, LORA_BW_125000, LORA_BW_250000, LORA_BW_500000};
+static const uint8_t BW_FSK[21] = {
+    FSK_BW_4800,   FSK_BW_5800,   FSK_BW_7300,   FSK_BW_9700,   FSK_BW_11700,  FSK_BW_14600,  FSK_BW_19500,
+    FSK_BW_23400,  FSK_BW_29300,  FSK_BW_39000,  FSK_BW_46900,  FSK_BW_58600,  FSK_BW_78200,  FSK_BW_93800,
+    FSK_BW_117300, FSK_BW_156200, FSK_BW_187200, FSK_BW_234300, FSK_BW_312000, FSK_BW_373600, FSK_BW_467000};
 
 uint8_t SX126x::wakeup_() {
   this->wait_busy_();
@@ -34,7 +35,7 @@ uint8_t SX126x::read_fifo_(uint8_t offset, std::vector<uint8_t> &packet) {
   this->transfer_byte(RADIO_READ_BUFFER);
   this->transfer_byte(offset);
   uint8_t status = this->transfer_byte(0x00);
-  for(int i = 0; i < packet.size(); i++) {
+  for (int i = 0; i < packet.size(); i++) {
     packet[i] = this->transfer_byte(0x00);
   }
   this->disable();
@@ -47,8 +48,8 @@ void SX126x::write_fifo_(uint8_t offset, const std::vector<uint8_t> &packet) {
   this->enable();
   this->transfer_byte(RADIO_WRITE_BUFFER);
   this->transfer_byte(offset);
-  for(int i = 0; i < packet.size(); i++) {
-     this->transfer_byte(packet[i]);
+  for (int i = 0; i < packet.size(); i++) {
+    this->transfer_byte(packet[i]);
   }
   this->disable();
   this->wait_busy_();
@@ -59,7 +60,7 @@ uint8_t SX126x::read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
   this->enable();
   this->transfer_byte(opcode);
   uint8_t status = this->transfer_byte(0x00);
-  for(int i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
     data[i] = this->transfer_byte(0x00);
   }
   this->disable();
@@ -71,8 +72,8 @@ void SX126x::write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
   this->wait_busy_();
   this->enable();
   this->transfer_byte(opcode);
-  for(int i = 0; i < size; i++) {
-     this->transfer_byte(data[i]);
+  for (int i = 0; i < size; i++) {
+    this->transfer_byte(data[i]);
   }
   this->disable();
   this->wait_busy_();
@@ -85,8 +86,8 @@ void SX126x::read_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
   this->write_byte(0x00);
-  for(int i = 0; i < size; i++) {
-     data[i] = this->transfer_byte(0x00);
+  for (int i = 0; i < size; i++) {
+    data[i] = this->transfer_byte(0x00);
   }
   this->disable();
   this->wait_busy_();
@@ -98,37 +99,12 @@ void SX126x::write_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->write_byte(RADIO_WRITE_REGISTER);
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
-  for(int i = 0; i < size; i++) {
-     this->transfer_byte(data[i]);
+  for (int i = 0; i < size; i++) {
+    this->transfer_byte(data[i]);
   }
   this->disable();
   this->wait_busy_();
 }
-
-uint8_t SX126x::read_register_(uint16_t reg) {
-  uint8_t data;
-  this->read_register_(reg, &data, 1);
-  return data;
-}
-
-void SX126x::write_register_(uint16_t reg, uint8_t data) {
-  this->write_register_(reg, &data, 1);
-}
-
-// void SX126x::read_fifo_(std::vector<uint8_t> &packet) {
-//   this->enable();
-//   RADIO_WRITE_BUFFER
-//   this->write_byte(REG_FIFO & 0x7F);
-//   this->read_array(packet.data(), packet.size());
-//   this->disable();
-// }
-
-// void SX126x::write_fifo_(const std::vector<uint8_t> &packet) {
-//   this->enable();
-//   this->write_byte(REG_FIFO | 0x80);
-//   this->write_array(packet.data(), packet.size());
-//   this->disable();
-// }
 
 void SX126x::setup() {
   ESP_LOGCONFIG(TAG, "Setting up SX126x...");
@@ -183,32 +159,21 @@ void SX126x::configure() {
   // buf[0] = 0x7F;
   // this->write_opcode_(RADIO_CALIBRATE, buf, 1);
 
+  // buf[0] = 0x01;
+  // this->write_opcode_(RADIO_SET_RFSWITCHMODE, buf, 1);
 
-
-    // buf[0] = 0x01;
-    // this->write_opcode_(RADIO_SET_RFSWITCHMODE, buf, 1);
-
-
-
-
-      // this->read_opcode_(RADIO_GET_STATUS, buf, 1);
-      // ESP_LOGE(TAG, "status %02x", buf[0]);
-
+  // this->read_opcode_(RADIO_GET_STATUS, buf, 1);
+  // ESP_LOGE(TAG, "status %02x", buf[0]);
 
   // buf[0] = MODE_STDBY_XOSC;
   // this->write_opcode_(RADIO_SET_STANDBY, buf, 1);
 
-
-
   // check silicon version to make sure hw is ok
-  this->read_register_(REG_VERSION_STRING, (uint8_t*) this->version_, 16);
+  this->read_register_(REG_VERSION_STRING, (uint8_t *) this->version_, 16);
   if (strncmp(this->version_, "SX126", 5) != 0) {
     this->mark_failed();
     return;
   }
-
-
-
 
   // // setup buffer
   // buf[0] = 0;
@@ -221,8 +186,6 @@ void SX126x::configure() {
 
   // buf[0] = 0x01;
   // this->write_opcode_(RADIO_SET_REGULATORMODE, buf, 1);
-
-
 
   // if (this->frequency_ > 900000000) {
   //   buf[0] = 0xE1;
@@ -261,13 +224,15 @@ void SX126x::configure() {
     }
     pa_power = std::max(pa_power, (int8_t) -3);
     pa_power = std::min(pa_power, (int8_t) 14);
-    this->write_register_(REG_OCP, 0x18); // max 80 mA
+    buf[0] = 0x18;   // max 80 mA
+    this->write_register_(REG_OCP, buf, 1);
   } else {
     uint8_t cfg[4] = {0x04, 0x07, 0x00, 0x01};
     this->write_opcode_(RADIO_SET_PACONFIG, cfg, 4);
     pa_power = std::max(pa_power, (int8_t) -3);
     pa_power = std::min(pa_power, (int8_t) 22);
-    this->write_register_(REG_OCP, 0x38); // max 140 mA
+    buf[0] = 0x38;  // max 140 mA
+    this->write_register_(REG_OCP, buf, 1);
   }
   buf[0] = pa_power;
   buf[1] = this->pa_ramp_;
@@ -286,8 +251,10 @@ void SX126x::configure() {
     this->set_packet_params_(this->payload_length_);
 
     // write sync word
-    this->write_register_(REG_LR_SYNCWORD + 0, 0x14);
-    this->write_register_(REG_LR_SYNCWORD + 1, 0x24);
+    buf[0] = 0x14;
+    this->write_register_(REG_LORA_SYNCWORD + 0, buf, 1);
+    buf[0] = 0x24;
+    this->write_register_(REG_LORA_SYNCWORD + 1, buf, 1);
   }
 
   // switch to rx or standby
@@ -299,14 +266,14 @@ void SX126x::configure() {
 }
 
 void SX126x::set_packet_params_(uint8_t payload_length) {
-    uint8_t buf[6];
-    buf[0] = (this->preamble_size_ >> 8) & 0xFF;
-    buf[1] = (this->preamble_size_ >> 0) & 0xFF;
-    buf[2] = (this->payload_length_ > 0) ? 0x01 : 0x00;
-    buf[3] = payload_length;
-    buf[4] = (this->crc_enable_) ? 0x01 : 0x00;
-    buf[5] = 0x00;
-    this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 6);
+  uint8_t buf[6];
+  buf[0] = (this->preamble_size_ >> 8) & 0xFF;
+  buf[1] = (this->preamble_size_ >> 0) & 0xFF;
+  buf[2] = (this->payload_length_ > 0) ? 0x01 : 0x00;
+  buf[3] = payload_length;
+  buf[4] = (this->crc_enable_) ? 0x01 : 0x00;
+  buf[5] = 0x00;
+  this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 6);
 }
 
 void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
@@ -354,10 +321,10 @@ void SX126x::loop() {
       if ((status & IRQ_CRC_ERROR) != IRQ_CRC_ERROR) {
         this->read_opcode_(RADIO_GET_PACKETSTATUS, buf, 3);
         if (this->modulation_ == PACKET_TYPE_LORA) {
-          rssi  = buf[0];
-          snr  = buf[1];
+          rssi = buf[0];
+          snr = buf[1];
         } else {
-          rssi  = buf[2];
+          rssi = buf[2];
           snr = 0;
         }
         this->read_opcode_(RADIO_GET_RXBUFFERSTATUS, buf, 2);
@@ -402,7 +369,7 @@ void SX126x::set_mode_rx() {
   uint8_t buf[8];
 
   // configure irq params
-  uint16_t irq =  IRQ_RX_DONE | IRQ_RX_TX_TIMEOUT | IRQ_CRC_ERROR;
+  uint16_t irq = IRQ_RX_DONE | IRQ_RX_TX_TIMEOUT | IRQ_CRC_ERROR;
   buf[0] = (irq >> 8) & 0xFF;
   buf[1] = (irq >> 0) & 0xFF;
   buf[2] = (irq >> 8) & 0xFF;
@@ -428,7 +395,7 @@ void SX126x::set_mode_tx() {
   uint8_t buf[8];
 
   // configure irq params
-  uint16_t irq =  IRQ_TX_DONE | IRQ_RX_TX_TIMEOUT;
+  uint16_t irq = IRQ_TX_DONE | IRQ_RX_TX_TIMEOUT;
   buf[0] = (irq >> 8) & 0xFF;
   buf[1] = (irq >> 0) & 0xFF;
   buf[2] = (irq >> 8) & 0xFF;

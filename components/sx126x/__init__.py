@@ -39,7 +39,7 @@ sx126x_ns = cg.esphome_ns.namespace("sx126x")
 SX126x = sx126x_ns.class_("SX126x", cg.Component, spi.SPIDevice)
 SX126xBw = sx126x_ns.enum("SX126xBw")
 SX126xPacketType = sx126x_ns.enum("SX126xPacketType")
-SX126xTcxoCtrl =  sx126x_ns.enum("SX126xTcxoCtrl")
+SX126xTcxoCtrl = sx126x_ns.enum("SX126xTcxoCtrl")
 SX126xRampTime = sx126x_ns.enum("SX126xRampTime")
 SX126xPulseShape = sx126x_ns.enum("SX126xPulseShape")
 SX126xLoraCr = sx126x_ns.enum("SX126xLoraCr")
@@ -200,7 +200,9 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_DEVIATION, default=5000): cv.int_range(min=0, max=100000),
             cv.Optional(CONF_DIO1_PIN): pins.internal_gpio_input_pin_schema,
             cv.Required(CONF_FREQUENCY): cv.int_range(min=137000000, max=1020000000),
-            cv.Required(CONF_HW_VERSION): cv.one_of("sx1261", "sx1262", "sx1268", lower=True),
+            cv.Required(CONF_HW_VERSION): cv.one_of(
+                "sx1261", "sx1262", "sx1268", lower=True
+            ),
             cv.Required(CONF_MODULATION): cv.enum(MOD),
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
             cv.Optional(CONF_PA_POWER, default=17): cv.int_range(min=0, max=17),

@@ -96,9 +96,7 @@ class SX126x : public Component,
   void write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   uint8_t read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   void write_register_(uint16_t reg, uint8_t *data, uint8_t size);
-  void write_register_(uint16_t reg, uint8_t data);
   void read_register_(uint16_t reg, uint8_t *data, uint8_t size);
-  uint8_t read_register_(uint16_t reg);
   void wait_busy_();
   uint8_t wakeup_();
   Trigger<std::vector<uint8_t>, float, float> *packet_trigger_{new Trigger<std::vector<uint8_t>, float, float>()};

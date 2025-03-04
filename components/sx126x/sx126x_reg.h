@@ -51,6 +51,13 @@ enum SX126xOpCode : uint8_t {
   RADIO_SET_LORASYMBTIMEOUT = 0xA0,
 };
 
+enum SX126xRegister : uint16_t {
+  REG_VERSION_STRING = 0x0320,
+  REG_GFSK_SYNCWORD = 0x06C0,
+  REG_LORA_SYNCWORD = 0x0740,
+  REG_OCP = 0x08E7,
+};
+
 enum SX126xMode : uint8_t {
   MODE_SLEEP,
   MODE_DEEP_SLEEP,
@@ -128,7 +135,6 @@ enum SX126xIrqMasks : uint16_t {
   IRQ_RADIO_ALL = 0xFFFF,
 };
 
-
 enum SX126xTcxoCtrl_t : uint8_t {
   TCXO_CTRL_1_6V = 0x00,
   TCXO_CTRL_1_7V = 0x01,
@@ -140,21 +146,6 @@ enum SX126xTcxoCtrl_t : uint8_t {
   TCXO_CTRL_3_3V = 0x07,
   TCXO_CTRL_NONE = 0xFF,
 };
-
-
-/*!
- * \brief The addresses of the registers holding SyncWords values
- */
-#define REG_LR_SYNCWORDBASEADDRESS                  0x06C0
-
-/*!
- * \brief The addresses of the register holding LoRa Modem SyncWord value
- */
-#define REG_LR_SYNCWORD                             0x0740
-
-#define REG_VERSION_STRING                      0x0320
-
-#define REG_OCP 0x08E7
 
 enum SX126xPulseShape : uint8_t {
   NO_FILTER = 0x00,
