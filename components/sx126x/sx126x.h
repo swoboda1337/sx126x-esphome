@@ -67,7 +67,6 @@ class SX126x : public Component,
   void set_mode_standby();
   void set_mode_tx();
   void set_modulation(uint8_t modulation) { this->modulation_ = modulation; }
-  void set_pa_pin(uint8_t pin) { this->pa_pin_ = pin; }
   void set_pa_power(uint8_t power) { this->pa_power_ = power; }
   void set_pa_ramp(uint8_t ramp) { this->pa_ramp_ = ramp; }
   void set_payload_length(uint8_t payload_length) { this->payload_length_ = payload_length; }
@@ -90,7 +89,7 @@ class SX126x : public Component,
  protected:
   void configure_fsk_ook_();
   void configure_lora_();
-  void set_mode_(SX126xOpMode mode);
+  void set_mode_(SX126xMode mode);
   void set_packet_params_(uint8_t payload_length);
   uint8_t read_fifo_(uint8_t offset, std::vector<uint8_t> &packet);
   void write_fifo_(uint8_t opcode, const std::vector<uint8_t> &packet);
@@ -120,7 +119,6 @@ class SX126x : public Component,
   uint8_t tcxo_voltage_;
   uint8_t coding_rate_;
   uint8_t modulation_;
-  uint8_t pa_pin_;
   uint8_t pa_power_;
   uint8_t pa_ramp_;
   uint8_t shaping_;

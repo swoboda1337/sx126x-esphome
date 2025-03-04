@@ -37,7 +37,6 @@ uint8_t SX126x::read_fifo_(uint8_t offset, std::vector<uint8_t> &packet) {
   for(int i = 0; i < packet.size(); i++) {
     packet[i] = this->transfer_byte(0x00);
   }
-  // this->read_array(data, size);
   this->disable();
   this->wait_busy_();
   return status;
@@ -384,7 +383,7 @@ void SX126x::run_image_cal() {
   // }
 }
 
-void SX126x::set_mode_(SX126xOpMode mode) {
+void SX126x::set_mode_(SX126xMode mode) {
   // uint32_t start = millis();
   // this->write_register_(REG_OP_MODE, this->modulation_ | mode);
   // while (true) {
@@ -472,10 +471,10 @@ void SX126x::dump_config() {
   LOG_PIN("  DIO1 Pin: ", this->dio1_pin_);
   ESP_LOGCONFIG(TAG, "  Frequency: %" PRIu32 " Hz", this->frequency_);
   ESP_LOGCONFIG(TAG, "  Bandwidth: %" PRIu32 " Hz", BW_HZ[this->bandwidth_]);
-  ESP_LOGCONFIG(TAG, "  PA Pin: %s", this->pa_pin_ == PA_PIN_BOOST ? "BOOST" : "RFO");
   ESP_LOGCONFIG(TAG, "  PA Power: %" PRIu32 " dBm", this->pa_power_);
   ESP_LOGCONFIG(TAG, "  PA Ramp: %" PRIu16 " us", RAMP[this->pa_ramp_]);
-  if (this->modulation_ == MOD_FSK) {
+  if (this->modulation_ == PACKET_TYPE_GFSK) {
+    ESP_LOGCONFIG(TAG, "  Modulation: %s", "FSK");
     ESP_LOGCONFIG(TAG, "  Deviation: %" PRIu32 " Hz", this->deviation_);
     if (this->shaping_ == GAUSSIAN_BT_0_3) {
       ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_3");
@@ -488,41 +487,29 @@ void SX126x::dump_config() {
     } else {
       ESP_LOGCONFIG(TAG, "  Shaping: NONE");
     }
-  }
-  if (this->modulation_ == PACKET_TYPE_LORA) {
+    ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
+    ESP_LOGCONFIG(TAG, "  Preamble Detect: %" PRIu16, this->preamble_detect_);
+    ESP_LOGCONFIG(TAG, "  Bitrate: %" PRIu32 "b/s", this->bitrate_);
+  } else if (this->modulation_ == PACKET_TYPE_LORA) {
     ESP_LOGCONFIG(TAG, "  Modulation: %s", "LORA");
     ESP_LOGCONFIG(TAG, "  Spreading Factor: %" PRIu8, this->spreading_factor_);
-    if (this->coding_rate_ == CODING_RATE_4_5) {
+    if (this->coding_rate_ == LORA_CR_4_5) {
       ESP_LOGCONFIG(TAG, "  Coding Rate: 4/5");
-    } else if (this->coding_rate_ == CODING_RATE_4_6) {
+    } else if (this->coding_rate_ == LORA_CR_4_6) {
       ESP_LOGCONFIG(TAG, "  Coding Rate: 4/6");
-    } else if (this->coding_rate_ == CODING_RATE_4_7) {
+    } else if (this->coding_rate_ == LORA_CR_4_7) {
       ESP_LOGCONFIG(TAG, "  Coding Rate: 4/7");
     } else {
       ESP_LOGCONFIG(TAG, "  Coding Rate: 4/8");
     }
-    if (!this->sync_value_.empty()) {
-      ESP_LOGCONFIG(TAG, "  Sync Value: 0x%02x", this->sync_value_[0]);
-    }
     ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
-  } else {
-    ESP_LOGCONFIG(TAG, "  Modulation: %s", this->modulation_ == MOD_FSK ? "FSK" : "OOK");
-    ESP_LOGCONFIG(TAG, "  Bitrate: %" PRIu32 "b/s", this->bitrate_);
-    ESP_LOGCONFIG(TAG, "  Bitsync: %s", TRUEFALSE(this->bitsync_));
-    ESP_LOGCONFIG(TAG, "  Rx Start: %s", TRUEFALSE(this->rx_start_));
-    ESP_LOGCONFIG(TAG, "  Rx Floor: %.1f dBm", this->rx_floor_);
-    ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
-    ESP_LOGCONFIG(TAG, "  Preamble Detect: %" PRIu16, this->preamble_detect_);
-    if (!this->sync_value_.empty()) {
-      ESP_LOGCONFIG(TAG, "  Sync Value: 0x%s", format_hex(this->sync_value_).c_str());
-    }
   }
-  if (this->payload_length_ > 0) {
-    ESP_LOGCONFIG(TAG, "  Payload Length: %" PRIu32, this->payload_length_);
+  if (!this->sync_value_.empty()) {
+    ESP_LOGCONFIG(TAG, "  Sync Value: 0x%s", format_hex(this->sync_value_).c_str());
   }
-  if (this->payload_length_ > 0 || this->modulation_ == MOD_LORA) {
-    ESP_LOGCONFIG(TAG, "  CRC Enable: %s", TRUEFALSE(this->crc_enable_));
-  }
+  ESP_LOGCONFIG(TAG, "  Payload Length: %" PRIu32, this->payload_length_);
+  ESP_LOGCONFIG(TAG, "  CRC Enable: %s", TRUEFALSE(this->crc_enable_));
+  ESP_LOGCONFIG(TAG, "  Rx Start: %s", TRUEFALSE(this->rx_start_));
   if (this->is_failed()) {
     ESP_LOGE(TAG, "Configuring SX126x failed");
   }

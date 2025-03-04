@@ -19,7 +19,6 @@ CONF_DIO1_PIN = "dio1_pin"
 CONF_HW_VERSION = "hw_version"
 CONF_MODULATION = "modulation"
 CONF_ON_PACKET = "on_packet"
-CONF_PA_PIN = "pa_pin"
 CONF_PA_POWER = "pa_power"
 CONF_PA_RAMP = "pa_ramp"
 CONF_PAYLOAD_LENGTH = "payload_length"
@@ -41,7 +40,6 @@ SX126x = sx126x_ns.class_("SX126x", cg.Component, spi.SPIDevice)
 SX126xBw = sx126x_ns.enum("SX126xBw")
 SX126xPacketType = sx126x_ns.enum("SX126xPacketType")
 SX126xTcxoCtrl =  sx126x_ns.enum("SX126xTcxoCtrl")
-SX126xPaConfig = sx126x_ns.enum("SX126xPaConfig")
 SX126xRampTime = sx126x_ns.enum("SX126xRampTime")
 SX126xPulseShape = sx126x_ns.enum("SX126xPulseShape")
 SX126xLoraCr = sx126x_ns.enum("SX126xLoraCr")
@@ -91,11 +89,6 @@ MOD = {
     "LORA": SX126xPacketType.PACKET_TYPE_LORA,
     "GFSK": SX126xPacketType.PACKET_TYPE_GFSK,
     "LRHSS": SX126xPacketType.PACKET_TYPE_LRHSS,
-}
-
-PA_PIN = {
-    "RFO": SX126xPaConfig.PA_PIN_RFO,
-    "BOOST": SX126xPaConfig.PA_PIN_BOOST,
 }
 
 TCXO_VOLTAGE = {
@@ -191,10 +184,6 @@ def validate_config(config):
             raise cv.Invalid(
                 "Bitrate is configured but not bitsync; add 'bitsync: true'"
             )
-    if config[CONF_PA_PIN] == "RFO" and config[CONF_PA_POWER] > 15:
-        raise cv.Invalid("PA power must be <= 15 dbm when using the RFO pin")
-    if config[CONF_PA_PIN] == "BOOST" and config[CONF_PA_POWER] < 2:
-        raise cv.Invalid("PA power must be >= 2 dbm when using the BOOST pin")
     return config
 
 
@@ -214,7 +203,6 @@ CONFIG_SCHEMA = cv.All(
             cv.Required(CONF_HW_VERSION): cv.one_of("sx1261", "sx1262", "sx1268", lower=True),
             cv.Required(CONF_MODULATION): cv.enum(MOD),
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
-            cv.Optional(CONF_PA_PIN, default="BOOST"): cv.enum(PA_PIN),
             cv.Optional(CONF_PA_POWER, default=17): cv.int_range(min=0, max=17),
             cv.Optional(CONF_PA_RAMP, default="40us"): cv.enum(RAMP),
             cv.Optional(CONF_PAYLOAD_LENGTH, default=0): cv.int_range(min=0, max=256),
@@ -266,7 +254,6 @@ async def to_code(config):
     cg.add(var.set_hw_version(config[CONF_HW_VERSION]))
     cg.add(var.set_deviation(config[CONF_DEVIATION]))
     cg.add(var.set_modulation(config[CONF_MODULATION]))
-    cg.add(var.set_pa_pin(config[CONF_PA_PIN]))
     cg.add(var.set_pa_ramp(config[CONF_PA_RAMP]))
     cg.add(var.set_pa_power(config[CONF_PA_POWER]))
     cg.add(var.set_shaping(config[CONF_SHAPING]))
