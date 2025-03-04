@@ -9,15 +9,14 @@ namespace sx126x {
 static const char *const TAG = "sx126x";
 static const uint32_t FXOSC = 32000000u;
 static const uint16_t RAMP[8] = {10, 20, 40, 80, 200, 800, 1700, 3400};
-static const uint32_t BW_HZ[22] = {2604,  3125,  3906,  5208,  6250,  7812,   10416,  12500,  15625,  20833,  25000,
-                                   31250, 41666, 50000, 62500, 83333, 100000, 125000, 166666, 200000, 250000, 500000};
-static const uint8_t BW_LORA[22] = {LORA_BW_7,   LORA_BW_7,   LORA_BW_7,   LORA_BW_7,   LORA_BW_7,   LORA_BW_7,  LORA_BW_10, LORA_BW_15,
-                                    LORA_BW_15,  LORA_BW_20,  LORA_BW_31,  LORA_BW_31,  LORA_BW_41,  LORA_BW_62, LORA_BW_62, LORA_BW_125,
-                                    LORA_BW_125, LORA_BW_125, LORA_BW_250, LORA_BW_250, LORA_BW_250, LORA_BW_500};
-static const uint8_t BW_FSK_OOK[22] = {RX_BW_2_6,   RX_BW_3_1,   RX_BW_3_9,   RX_BW_5_2,  RX_BW_6_3,   RX_BW_7_8,
-                                       RX_BW_10_4,  RX_BW_12_5,  RX_BW_15_6,  RX_BW_20_8, RX_BW_25_0,  RX_BW_31_3,
-                                       RX_BW_41_7,  RX_BW_50_0,  RX_BW_62_5,  RX_BW_83_3, RX_BW_100_0, RX_BW_125_0,
-                                       RX_BW_166_7, RX_BW_200_0, RX_BW_250_0, RX_BW_250_0};
+static const uint32_t BW_HZ[31] = {4800, 5800, 7300, 9700, 11700, 14600, 19500, 23400, 29300, 39000, 46900, 58600, 78200, 93800,
+                                   117300, 156200, 187200, 234300, 312000, 373600, 467000, 7810, 10420, 15630, 20830, 31250, 41670,
+                                   62500, 125000, 250000, 500000};
+static const uint8_t BW_LORA[10] = {LORA_BW_7810, LORA_BW_10420, LORA_BW_15630, LORA_BW_20830, LORA_BW_31250, LORA_BW_41670,
+                                    LORA_BW_62500, LORA_BW_125000, LORA_BW_250000, LORA_BW_500000};
+static const uint8_t BW_FSK[21] = {FSK_BW_4800, FSK_BW_5800, FSK_BW_7300, FSK_BW_9700, FSK_BW_11700, FSK_BW_14600, FSK_BW_19500,
+                                   FSK_BW_23400, FSK_BW_29300, FSK_BW_39000, FSK_BW_46900, FSK_BW_58600, FSK_BW_78200, FSK_BW_93800,
+                                   FSK_BW_117300, FSK_BW_156200, FSK_BW_187200, FSK_BW_234300, FSK_BW_312000, FSK_BW_373600, FSK_BW_467000};
 
 uint8_t SX126x::wakeup_() {
   this->wait_busy_();
@@ -280,7 +279,7 @@ void SX126x::configure() {
     // set modulation params
     float duration = 1000.0f * std::pow(2, this->spreading_factor_) / BW_HZ[this->bandwidth_];
     buf[0] = this->spreading_factor_;
-    buf[1] = BW_LORA[this->bandwidth_];
+    buf[1] = BW_LORA[this->bandwidth_ - SX126X_BW_7810];
     buf[2] = this->coding_rate_;
     buf[3] = (duration > 16.38f) ? 0x01 : 0x00;
     this->write_opcode_(RADIO_SET_MODULATIONPARAMS, buf, 4);

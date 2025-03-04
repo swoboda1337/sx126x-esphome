@@ -47,28 +47,37 @@ SX126xPulseShape = sx126x_ns.enum("SX126xPulseShape")
 SX126xLoraCr = sx126x_ns.enum("SX126xLoraCr")
 
 BW = {
-    "2_6kHz": SX126xBw.SX126X_BW_2_6,
-    "3_1kHz": SX126xBw.SX126X_BW_3_1,
-    "3_9kHz": SX126xBw.SX126X_BW_3_9,
-    "5_2kHz": SX126xBw.SX126X_BW_5_2,
-    "6_3kHz": SX126xBw.SX126X_BW_6_3,
-    "7_8kHz": SX126xBw.SX126X_BW_7_8,
-    "10_4kHz": SX126xBw.SX126X_BW_10_4,
-    "12_5kHz": SX126xBw.SX126X_BW_12_5,
-    "15_6kHz": SX126xBw.SX126X_BW_15_6,
-    "20_8kHz": SX126xBw.SX126X_BW_20_8,
-    "25_0kHz": SX126xBw.SX126X_BW_25_0,
-    "31_3kHz": SX126xBw.SX126X_BW_31_3,
-    "41_7kHz": SX126xBw.SX126X_BW_41_7,
-    "50_0kHz": SX126xBw.SX126X_BW_50_0,
-    "62_5kHz": SX126xBw.SX126X_BW_62_5,
-    "83_3kHz": SX126xBw.SX126X_BW_83_3,
-    "100_0kHz": SX126xBw.SX126X_BW_100_0,
-    "125_0kHz": SX126xBw.SX126X_BW_125_0,
-    "166_7kHz": SX126xBw.SX126X_BW_166_7,
-    "200_0kHz": SX126xBw.SX126X_BW_200_0,
-    "250_0kHz": SX126xBw.SX126X_BW_250_0,
-    "500_0kHz": SX126xBw.SX126X_BW_500_0,
+    "4_8kHz": SX126xBw.SX126X_BW_4800,
+    "5_8kHz": SX126xBw.SX126X_BW_5800,
+    "7_3kHz": SX126xBw.SX126X_BW_7300,
+    "9_7kHz": SX126xBw.SX126X_BW_9700,
+    "11_7kHz": SX126xBw.SX126X_BW_11700,
+    "14_6kHz": SX126xBw.SX126X_BW_14600,
+    "19_5kHz": SX126xBw.SX126X_BW_19500,
+    "23_4kHz": SX126xBw.SX126X_BW_23400,
+    "29_3kHz": SX126xBw.SX126X_BW_29300,
+    "39_0kHz": SX126xBw.SX126X_BW_39000,
+    "46_9kHz": SX126xBw.SX126X_BW_46900,
+    "58_6kHz": SX126xBw.SX126X_BW_58600,
+    "78_2kHz": SX126xBw.SX126X_BW_78200,
+    "93_8kHz": SX126xBw.SX126X_BW_93800,
+    "117_3kHz": SX126xBw.SX126X_BW_117300,
+    "156_2kHz": SX126xBw.SX126X_BW_156200,
+    "187_2kHz": SX126xBw.SX126X_BW_187200,
+    "234_3kHz": SX126xBw.SX126X_BW_234300,
+    "312_0kHz": SX126xBw.SX126X_BW_312000,
+    "373_6kHz": SX126xBw.SX126X_BW_373600,
+    "467_0kHz": SX126xBw.SX126X_BW_467000,
+    "7_8kHz": SX126xBw.SX126X_BW_7810,
+    "10_4kHz": SX126xBw.SX126X_BW_10420,
+    "15_6kHz": SX126xBw.SX126X_BW_15630,
+    "20_8kHz": SX126xBw.SX126X_BW_20830,
+    "31_3kHz": SX126xBw.SX126X_BW_31250,
+    "41_7kHz": SX126xBw.SX126X_BW_41670,
+    "62_5kHz": SX126xBw.SX126X_BW_62500,
+    "125_0kHz": SX126xBw.SX126X_BW_125000,
+    "250_0kHz": SX126xBw.SX126X_BW_250000,
+    "500_0kHz": SX126xBw.SX126X_BW_500000,
 }
 
 CODING_RATE = {
@@ -141,20 +150,20 @@ def validate_raw_data(value):
 
 
 def validate_config(config):
+    lora_bws = [
+        "7_8kHz",
+        "10_4kHz",
+        "15_6kHz",
+        "20_8kHz",
+        "31_3kHz",
+        "41_7kHz",
+        "62_5kHz",
+        "125_0kHz",
+        "250_0kHz",
+        "500_0kHz",
+    ]
     if config[CONF_MODULATION] == "LORA":
-        bws = [
-            "7_8kHz",
-            "10_4kHz",
-            "15_6kHz",
-            "20_8kHz",
-            "31_3kHz",
-            "41_7kHz",
-            "62_5kHz",
-            "125_0kHz",
-            "250_0kHz",
-            "500_0kHz",
-        ]
-        if config[CONF_BANDWIDTH] not in bws:
+        if config[CONF_BANDWIDTH] not in lora_bws:
             raise cv.Invalid(
                 f"Bandwidth {config[CONF_BANDWIDTH]} is not available with LORA"
             )
@@ -165,9 +174,9 @@ def validate_config(config):
         if config[CONF_SPREADING_FACTOR] == 6 and config[CONF_PAYLOAD_LENGTH] == 0:
             raise cv.Invalid("Payload length must be set when spreading factor is 6")
     else:
-        if config[CONF_BANDWIDTH] == "500_0kHz":
+        if config[CONF_BANDWIDTH] in lora_bws:
             raise cv.Invalid(
-                f"Bandwidth {config[CONF_BANDWIDTH]} is only available with LORA"
+                f"Bandwidth {config[CONF_BANDWIDTH]} is not available with FSK"
             )
         if config[CONF_PAYLOAD_LENGTH] > 64:
             raise cv.Invalid("Payload length must be >= 64 with FSK/OOK")

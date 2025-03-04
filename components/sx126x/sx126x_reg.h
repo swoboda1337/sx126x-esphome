@@ -69,17 +69,41 @@ enum SX126xPacketType : uint8_t {
   PACKET_TYPE_LRHSS = 0x03,
 };
 
+enum SX126xFskBw : uint8_t {
+  FSK_BW_4800 = 0x1F,
+  FSK_BW_5800 = 0x17,
+  FSK_BW_7300 = 0x0F,
+  FSK_BW_9700 = 0x1E,
+  FSK_BW_11700 = 0x16,
+  FSK_BW_14600 = 0x0E,
+  FSK_BW_19500 = 0x1D,
+  FSK_BW_23400 = 0x15,
+  FSK_BW_29300 = 0x0D,
+  FSK_BW_39000 = 0x1C,
+  FSK_BW_46900 = 0x14,
+  FSK_BW_58600 = 0x0C,
+  FSK_BW_78200 = 0x1B,
+  FSK_BW_93800 = 0x13,
+  FSK_BW_117300 = 0x0B,
+  FSK_BW_156200 = 0x1A,
+  FSK_BW_187200 = 0x12,
+  FSK_BW_234300 = 0x0A,
+  FSK_BW_312000 = 0x19,
+  FSK_BW_373600 = 0x11,
+  FSK_BW_467000 = 0x09,
+};
+
 enum SX126xLoraBw : uint8_t {
-  LORA_BW_7 = 0x00,
-  LORA_BW_10 = 0x08,
-  LORA_BW_15 = 0x01,
-  LORA_BW_20 = 0x09,
-  LORA_BW_31 = 0x02,
-  LORA_BW_41 = 0x0A,
-  LORA_BW_62 = 0x03,
-  LORA_BW_125 = 0x04,
-  LORA_BW_250 = 0x05,
-  LORA_BW_500 = 0x06,
+  LORA_BW_7810 = 0x00,
+  LORA_BW_10420 = 0x08,
+  LORA_BW_15630 = 0x01,
+  LORA_BW_20830 = 0x09,
+  LORA_BW_31250 = 0x02,
+  LORA_BW_41670 = 0x0A,
+  LORA_BW_62500 = 0x03,
+  LORA_BW_125000 = 0x04,
+  LORA_BW_250000 = 0x05,
+  LORA_BW_500000 = 0x06,
 };
 
 enum SX126xLoraCr : uint8_t {
@@ -265,30 +289,6 @@ enum SX126xRxConfig : uint8_t {
   TRIGGER_RSSI = 0x01,
   TRIGGER_PREAMBLE = 0x06,
   TRIGGER_ALL = 0x07,
-};
-
-enum SX126xRxBw : uint8_t {
-  RX_BW_2_6 = 0x17,
-  RX_BW_3_1 = 0x0F,
-  RX_BW_3_9 = 0x07,
-  RX_BW_5_2 = 0x16,
-  RX_BW_6_3 = 0x0E,
-  RX_BW_7_8 = 0x06,
-  RX_BW_10_4 = 0x15,
-  RX_BW_12_5 = 0x0D,
-  RX_BW_15_6 = 0x05,
-  RX_BW_20_8 = 0x14,
-  RX_BW_25_0 = 0x0C,
-  RX_BW_31_3 = 0x04,
-  RX_BW_41_7 = 0x13,
-  RX_BW_50_0 = 0x0B,
-  RX_BW_62_5 = 0x03,
-  RX_BW_83_3 = 0x12,
-  RX_BW_100_0 = 0x0A,
-  RX_BW_125_0 = 0x02,
-  RX_BW_166_7 = 0x11,
-  RX_BW_200_0 = 0x09,
-  RX_BW_250_0 = 0x01,
 };
 
 enum SX126xOokPeak : uint8_t {
