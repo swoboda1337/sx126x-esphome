@@ -307,7 +307,7 @@ void SX126x::set_packet_params_(uint8_t payload_length) {
     buf[4] = 0x00;
     buf[5] = 0x00;
     buf[6] = this->payload_length_;
-    buf[7] = this->crc_enable_ ? 0x02 : 0x01;
+    buf[7] = this->crc_enable_ ? 0x06 : 0x01;
     buf[8] = 0x00;
     this->write_opcode_(RADIO_SET_PACKETPARAMS, buf, 9);
   }
