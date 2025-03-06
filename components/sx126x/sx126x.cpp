@@ -142,6 +142,8 @@ void SX126x::configure() {
     buf[2] = (delay >> 8) & 0xFF;
     buf[3] = (delay >> 0) & 0xFF;
     this->write_opcode_(RADIO_SET_TCXOMODE, buf, 4);
+    buf[0] = 0x7F;
+    this->write_opcode_(RADIO_CALIBRATE, buf, 1);
   }
 
   // clear errors

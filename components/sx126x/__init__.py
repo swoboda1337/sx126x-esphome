@@ -194,7 +194,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
             cv.Optional(CONF_PA_POWER, default=17): cv.int_range(min=0, max=17),
             cv.Optional(CONF_PA_RAMP, default="40us"): cv.enum(RAMP),
-            cv.Required(CONF_PAYLOAD_LENGTH): cv.int_range(min=0, max=256),
+            cv.Optional(CONF_PAYLOAD_LENGTH, default=0): cv.int_range(min=0, max=256),
             cv.Optional(CONF_PREAMBLE_DETECT, default=2): cv.int_range(min=0, max=4),
             cv.Required(CONF_PREAMBLE_SIZE): cv.int_range(min=1, max=65535),
             cv.Required(CONF_RST_PIN): pins.internal_gpio_output_pin_schema,
