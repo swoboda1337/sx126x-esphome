@@ -56,7 +56,7 @@ template<typename... Ts> class SetModeStandbyAction : public Action<Ts...> {
  public:
   SetModeStandbyAction(SX126x *sx126x) : sx126x_(sx126x) {}
 
-  void play(Ts... x) override { this->sx126x_->set_mode_standby(); }
+  void play(Ts... x) override { this->sx126x_->set_mode_standby(STDBY_XOSC); }
 
  protected:
   SX126x *sx126x_;

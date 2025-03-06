@@ -1,13 +1,11 @@
 #include "sx126x.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/log.h"
-#include <cinttypes>
 
 namespace esphome {
 namespace sx126x {
 
 static const char *const TAG = "sx126x";
-static const uint32_t FXOSC = 32000000u;
 static const uint16_t RAMP[8] = {10, 20, 40, 80, 200, 800, 1700, 3400};
 static const uint32_t BW_HZ[31] = {4800,  5800,  7300,  9700,   11700,  14600,  19500,  23400,  29300,  39000,  46900,
                                    58600, 78200, 93800, 117300, 156200, 187200, 234300, 312000, 373600, 467000, 7810,
@@ -224,7 +222,7 @@ void SX126x::configure() {
     }
     pa_power = std::max(pa_power, (int8_t) -3);
     pa_power = std::min(pa_power, (int8_t) 14);
-    buf[0] = 0x18;   // max 80 mA
+    buf[0] = 0x18;  // max 80 mA
     this->write_register_(REG_OCP, buf, 1);
   } else {
     uint8_t cfg[4] = {0x04, 0x07, 0x00, 0x01};
@@ -284,7 +282,7 @@ void SX126x::configure() {
   if (this->rx_start_) {
     this->set_mode_rx();
   } else {
-    this->set_mode_standby();
+    this->set_mode_standby(STDBY_XOSC);
   }
 }
 
@@ -322,7 +320,7 @@ void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
     ESP_LOGE(TAG, "Packet size out of range");
     return;
   }
-  this->set_mode_standby();
+  this->set_mode_standby(STDBY_XOSC);
   if (this->payload_length_ == 0) {
     this->set_packet_params_(packet.size());
   }
@@ -342,7 +340,7 @@ void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
   if (this->rx_start_) {
     this->set_mode_rx();
   } else {
-    this->set_mode_standby();
+    this->set_mode_standby(STDBY_XOSC);
   }
 }
 
@@ -382,21 +380,6 @@ void SX126x::run_image_cal() {
   // while (this->read_register_(REG_IMAGE_CAL) & IMAGE_CAL_RUNNING) {
   //   if (millis() - start > 20) {
   //     ESP_LOGE(TAG, "Image cal failure");
-  //     break;
-  //   }
-  // }
-}
-
-void SX126x::set_mode_(SX126xMode mode) {
-  // uint32_t start = millis();
-  // this->write_register_(REG_OP_MODE, this->modulation_ | mode);
-  // while (true) {
-  //   uint8_t curr = this->read_register_(REG_OP_MODE) & MODE_MASK;
-  //   if ((curr == mode) || (mode == MODE_RX && curr == MODE_RX_FS)) {
-  //     break;
-  //   }
-  //   if (millis() - start > 20) {
-  //     ESP_LOGE(TAG, "Set mode failure");
   //     break;
   //   }
   // }
@@ -450,9 +433,9 @@ void SX126x::set_mode_tx() {
   this->write_opcode_(RADIO_SET_TX, buf, 3);
 }
 
-void SX126x::set_mode_standby() {
+void SX126x::set_mode_standby(SX126xStandbyMode mode) {
   uint8_t buf[1];
-  buf[0] = MODE_STDBY_RC;
+  buf[0] = mode;
   this->write_opcode_(RADIO_SET_STANDBY, buf, 1);
 }
 

@@ -58,16 +58,9 @@ enum SX126xRegister : uint16_t {
   REG_OCP = 0x08E7,
 };
 
-enum SX126xMode : uint8_t {
-  MODE_SLEEP,
-  MODE_DEEP_SLEEP,
-  MODE_STDBY_RC,
-  MODE_STDBY_XOSC,
-  MODE_FS,
-  MODE_TX,
-  MODE_RX,
-  MODE_RX_DC,
-  MODE_CAD,
+enum SX126xStandbyMode : uint8_t {
+  STDBY_RC = 0x00,
+  STDBY_XOSC = 0x01,
 };
 
 enum SX126xPacketType : uint8_t {

@@ -55,7 +55,6 @@ class SX126x : public Component,
   void dump_config() override;
   void set_bandwidth(SX126xBw bandwidth) { this->bandwidth_ = bandwidth; }
   void set_bitrate(uint32_t bitrate) { this->bitrate_ = bitrate; }
-  void set_bitsync(bool bitsync) { this->bitsync_ = bitsync; }
   void set_busy_pin(InternalGPIOPin *busy_pin) { this->busy_pin_ = busy_pin; }
   void set_coding_rate(uint8_t coding_rate) { this->coding_rate_ = coding_rate; }
   void set_crc_enable(bool crc_enable) { this->crc_enable_ = crc_enable; }
@@ -64,7 +63,7 @@ class SX126x : public Component,
   void set_frequency(uint32_t frequency) { this->frequency_ = frequency; }
   void set_hw_version(std::string hw_version) { this->hw_version_ = hw_version; }
   void set_mode_rx();
-  void set_mode_standby();
+  void set_mode_standby(SX126xStandbyMode mode);
   void set_mode_tx();
   void set_modulation(uint8_t modulation) { this->modulation_ = modulation; }
   void set_pa_power(uint8_t power) { this->pa_power_ = power; }
@@ -88,7 +87,6 @@ class SX126x : public Component,
  protected:
   void configure_fsk_ook_();
   void configure_lora_();
-  void set_mode_(SX126xMode mode);
   void set_packet_params_(uint8_t payload_length);
   uint8_t read_fifo_(uint8_t offset, std::vector<uint8_t> &packet);
   void write_fifo_(uint8_t opcode, const std::vector<uint8_t> &packet);
@@ -120,7 +118,6 @@ class SX126x : public Component,
   uint8_t pa_ramp_;
   uint8_t shaping_;
   uint8_t spreading_factor_;
-  bool bitsync_;
   bool crc_enable_;
   bool rx_start_;
   bool rf_switch_;
