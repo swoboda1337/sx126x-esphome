@@ -134,10 +134,6 @@ void SX126x::configure() {
   // wakeup
   this->wakeup_();
 
-  buf[0] = 0x00;
-  buf[1] = 0x00;
-  this->write_opcode_(RADIO_CLR_ERROR, buf, 2);
-
   // config tcxo
   if (this->tcxo_voltage_ != TCXO_CTRL_NONE) {
     uint32_t delay = this->tcxo_delay_ >> 6;
@@ -148,23 +144,16 @@ void SX126x::configure() {
     this->write_opcode_(RADIO_SET_TCXOMODE, buf, 4);
   }
 
+  // clear errors
+  buf[0] = 0x00;
+  buf[1] = 0x00;
+  this->write_opcode_(RADIO_CLR_ERROR, buf, 2);
+
   // rf switch
   if (this->rf_switch_) {
     buf[0] = 0x01;
     this->write_opcode_(RADIO_SET_RFSWITCHMODE, buf, 1);
   }
-
-  // buf[0] = 0x7F;
-  // this->write_opcode_(RADIO_CALIBRATE, buf, 1);
-
-  // buf[0] = 0x01;
-  // this->write_opcode_(RADIO_SET_RFSWITCHMODE, buf, 1);
-
-  // this->read_opcode_(RADIO_GET_STATUS, buf, 1);
-  // ESP_LOGE(TAG, "status %02x", buf[0]);
-
-  // buf[0] = MODE_STDBY_XOSC;
-  // this->write_opcode_(RADIO_SET_STANDBY, buf, 1);
 
   // check silicon version to make sure hw is ok
   this->read_register_(REG_VERSION_STRING, (uint8_t *) this->version_, 16);
@@ -173,36 +162,14 @@ void SX126x::configure() {
     return;
   }
 
-  // // setup buffer
-  // buf[0] = 0;
-  // buf[1] = 0;
-  // this->write_opcode_(RADIO_SET_BUFFERBASEADDRESS, buf, 2);
-
   // setup packet type
   buf[0] = this->modulation_;
   this->write_opcode_(RADIO_SET_PACKETTYPE, buf, 1);
 
-  // buf[0] = 0x01;
-  // this->write_opcode_(RADIO_SET_REGULATORMODE, buf, 1);
+  // calibrate image
+  this->run_image_cal();
 
-  // if (this->frequency_ > 900000000) {
-  //   buf[0] = 0xE1;
-  //   buf[1] = 0xE9;
-  // } else if (this->frequency_ > 850000000) {
-  //   buf[0] = 0xD7;
-  //   buf[1] = 0xD8;
-  // } else if (this->frequency_ > 770000000) {
-  //   buf[0] = 0xC1;
-  //   buf[1] = 0xC5;
-  // } else if (this->frequency_ > 460000000) {
-  //   buf[0] = 0x75;
-  //   buf[1] = 0x81;
-  // } else if (this->frequency_ > 425000000) {
-  //   buf[0] = 0x6B;
-  //   buf[1] = 0x6F;
-  // }
-  // this->write_opcode_(RADIO_CALIBRATEIMAGE, buf, 2);
-
+  // set frequency
   uint64_t freq = ((uint64_t) this->frequency_ << 25) / XTAL_FREQ;
   buf[0] = (uint8_t) ((freq >> 24) & 0xFF);
   buf[1] = (uint8_t) ((freq >> 16) & 0xFF);
@@ -375,14 +342,26 @@ void SX126x::loop() {
 }
 
 void SX126x::run_image_cal() {
-  // uint32_t start = millis();
-  // this->write_register_(REG_IMAGE_CAL, AUTO_IMAGE_CAL_ON | IMAGE_CAL_START | TEMP_THRESHOLD_10C);
-  // while (this->read_register_(REG_IMAGE_CAL) & IMAGE_CAL_RUNNING) {
-  //   if (millis() - start > 20) {
-  //     ESP_LOGE(TAG, "Image cal failure");
-  //     break;
-  //   }
-  // }
+  uint8_t buf[2] = {0, 0};
+  if (this->frequency_ > 900000000) {
+    buf[0] = 0xE1;
+    buf[1] = 0xE9;
+  } else if (this->frequency_ > 850000000) {
+    buf[0] = 0xD7;
+    buf[1] = 0xD8;
+  } else if (this->frequency_ > 770000000) {
+    buf[0] = 0xC1;
+    buf[1] = 0xC5;
+  } else if (this->frequency_ > 460000000) {
+    buf[0] = 0x75;
+    buf[1] = 0x81;
+  } else if (this->frequency_ > 425000000) {
+    buf[0] = 0x6B;
+    buf[1] = 0x6F;
+  }
+  if (buf[0] > 0 && buf[1] > 0) {
+    this->write_opcode_(RADIO_CALIBRATEIMAGE, buf, 2);
+  }
 }
 
 void SX126x::set_mode_rx() {

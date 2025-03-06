@@ -181,7 +181,7 @@ CONFIG_SCHEMA = cv.All(
             cv.GenerateID(): cv.declare_id(SX126x),
             cv.Optional(CONF_BANDWIDTH, default="125_0kHz"): cv.enum(BW),
             cv.Optional(CONF_BITRATE, default=4800): cv.int_range(min=600, max=300000),
-            cv.Required(CONF_BUSY_PIN): pins.internal_gpio_output_pin_schema,
+            cv.Required(CONF_BUSY_PIN): pins.internal_gpio_input_pin_schema,
             cv.Optional(CONF_CODING_RATE, default="CR_4_5"): cv.enum(CODING_RATE),
             cv.Optional(CONF_CRC_ENABLE, default=False): cv.boolean,
             cv.Optional(CONF_DEVIATION, default=5000): cv.int_range(min=0, max=100000),
