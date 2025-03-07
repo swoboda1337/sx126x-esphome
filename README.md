@@ -35,8 +35,7 @@ To use this repo (example for Heltec V3) with LoRa:
 	  on_packet:
 	    then:
 	      - lambda: |-
-	          std::string message(x.begin(), x.end());
-	          ESP_LOGD("lambda", "packet %.2f %.2f %s", rssi, snr, message.c_str());
+	          ESP_LOGD("lambda", "packet %.2f %.2f %s", rssi, snr, format_hex(x).c_str());
 
 	button:
 	  - platform: template
@@ -81,8 +80,7 @@ To use this repo (example for Heltec V3) with FSK:
 	  on_packet:
 	    then:
 	      - lambda: |-
-	          std::string message(x.begin(), x.end());
-	          ESP_LOGD("lambda", "packet %.2f %.2f %s", rssi, snr, message.c_str());
+	          ESP_LOGD("lambda", "packet %.2f %s", rssi, format_hex(x).c_str());
 
 	button:
 	  - platform: template
