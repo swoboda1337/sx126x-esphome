@@ -313,6 +313,13 @@ void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
   }
 }
 
+void SX126x::call_listeners_(const std::vector<uint8_t> &packet, float rssi, float snr) {
+  for (auto &listener : this->listeners_) {
+    listener->on_packet(packet, rssi, snr);
+  }
+  this->packet_trigger_->trigger(packet, rssi, snr);
+}
+
 void SX126x::loop() {
   if (this->dio1_pin_->digital_read()) {
     uint16_t status;
@@ -334,7 +341,7 @@ void SX126x::loop() {
         this->read_opcode_(RADIO_GET_RXBUFFERSTATUS, buf, 2);
         std::vector<uint8_t> packet(buf[0]);
         this->read_fifo_(buf[1], packet);
-        this->packet_trigger_->trigger(packet, (float) rssi / -2.0f, (float) snr / 4.0f);
+        this->call_listeners_(packet, (float) rssi / -2.0f, (float) snr / 4.0f);
       }
     }
     buf[0] = (status >> 8) & 0xFF;

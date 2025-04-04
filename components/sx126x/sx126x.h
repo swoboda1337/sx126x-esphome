@@ -45,6 +45,11 @@ enum SX126xBw : uint8_t {
   SX126X_BW_500000,
 };
 
+class SX126xListener {
+ public:
+  virtual void on_packet(const std::vector<uint8_t> &packet, float rssi, float snr);
+};
+
 class SX126x : public Component,
                public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW, spi::CLOCK_PHASE_LEADING,
                                      spi::DATA_RATE_8MHZ> {
@@ -82,6 +87,7 @@ class SX126x : public Component,
   void run_image_cal();
   void configure();
   void transmit_packet(const std::vector<uint8_t> &packet);
+  void register_listener(SX126xListener *listener) { this->listeners_.push_back(listener); }
   Trigger<std::vector<uint8_t>, float, float> *get_packet_trigger() const { return this->packet_trigger_; };
 
  protected:
@@ -94,9 +100,11 @@ class SX126x : public Component,
   uint8_t read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   void write_register_(uint16_t reg, uint8_t *data, uint8_t size);
   void read_register_(uint16_t reg, uint8_t *data, uint8_t size);
+  void call_listeners_(const std::vector<uint8_t> &packet, float rssi, float snr);
   void wait_busy_();
   uint8_t wakeup_();
   Trigger<std::vector<uint8_t>, float, float> *packet_trigger_{new Trigger<std::vector<uint8_t>, float, float>()};
+  std::vector<SX126xListener *> listeners_;
   std::vector<uint8_t> sync_value_;
   InternalGPIOPin *busy_pin_{nullptr};
   InternalGPIOPin *dio1_pin_{nullptr};
