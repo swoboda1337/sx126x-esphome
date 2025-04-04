@@ -2,7 +2,7 @@ from esphome import automation, pins
 import esphome.codegen as cg
 from esphome.components import spi
 import esphome.config_validation as cv
-from esphome.const import CONF_DATA, CONF_FREQUENCY, CONF_ID
+from esphome.const import CONF_BUSY_PIN, CONF_DATA, CONF_FREQUENCY, CONF_ID
 from esphome.core import TimePeriod
 
 MULTI_CONF = True
@@ -24,7 +24,6 @@ CONF_PAYLOAD_LENGTH = "payload_length"
 CONF_PREAMBLE_DETECT = "preamble_detect"
 CONF_PREAMBLE_SIZE = "preamble_size"
 CONF_RST_PIN = "rst_pin"
-CONF_BUSY_PIN = "busy_pin"
 CONF_RX_START = "rx_start"
 CONF_RF_SWITCH = "rf_switch"
 CONF_SHAPING = "shaping"

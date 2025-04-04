@@ -1,9 +1,10 @@
 #pragma once
 
-#include "sx126x_reg.h"
 #include "esphome/components/spi/spi.h"
 #include "esphome/core/automation.h"
 #include "esphome/core/component.h"
+#include "sx126x_reg.h"
+#include <utility>
 #include <vector>
 
 namespace esphome {
@@ -66,7 +67,7 @@ class SX126x : public Component,
   void set_deviation(uint32_t deviation) { this->deviation_ = deviation; }
   void set_dio1_pin(InternalGPIOPin *dio1_pin) { this->dio1_pin_ = dio1_pin; }
   void set_frequency(uint32_t frequency) { this->frequency_ = frequency; }
-  void set_hw_version(std::string hw_version) { this->hw_version_ = hw_version; }
+  void set_hw_version(const std::string &hw_version) { this->hw_version_ = hw_version; }
   void set_mode_rx();
   void set_mode_tx();
   void set_mode_standby(SX126xStandbyMode mode);

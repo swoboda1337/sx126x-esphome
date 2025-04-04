@@ -128,7 +128,7 @@ enum SX126xIrqMasks : uint16_t {
   IRQ_RADIO_ALL = 0xFFFF,
 };
 
-enum SX126xTcxoCtrl_t : uint8_t {
+enum SX126xTcxoCtrl : uint8_t {
   TCXO_CTRL_1_6V = 0x00,
   TCXO_CTRL_1_7V = 0x01,
   TCXO_CTRL_1_8V = 0x02,
