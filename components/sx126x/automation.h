@@ -7,6 +7,16 @@
 namespace esphome {
 namespace sx126x {
 
+template<typename... Ts> class RunImageCalAction : public Action<Ts...> {
+ public:
+  RunImageCalAction(SX126x *sx126x) : sx126x_(sx126x) {}
+
+  void play(Ts... x) override { this->sx126x_->run_image_cal(); }
+
+ protected:
+  SX126x *sx126x_;
+};
+
 template<typename... Ts> class SendPacketAction : public Action<Ts...>, public Parented<SX126x> {
  public:
   void set_data_template(std::function<std::vector<uint8_t>(Ts...)> func) {
@@ -47,6 +57,16 @@ template<typename... Ts> class SetModeRxAction : public Action<Ts...> {
   SetModeRxAction(SX126x *sx126x) : sx126x_(sx126x) {}
 
   void play(Ts... x) override { this->sx126x_->set_mode_rx(); }
+
+ protected:
+  SX126x *sx126x_;
+};
+
+template<typename... Ts> class SetModeSleepAction : public Action<Ts...> {
+ public:
+  SetModeSleepAction(SX126x *sx126x) : sx126x_(sx126x) {}
+
+  void play(Ts... x) override { this->sx126x_->set_mode_sleep(); }
 
  protected:
   SX126x *sx126x_;

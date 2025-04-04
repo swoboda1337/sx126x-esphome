@@ -119,11 +119,13 @@ SHAPING = {
     "NONE": SX126xPulseShape.NO_FILTER,
 }
 
+RunImageCalAction = sx126x_ns.class_("RunImageCalAction", automation.Action)
 SendPacketAction = sx126x_ns.class_(
     "SendPacketAction", automation.Action, cg.Parented.template(SX126x)
 )
 SetModeTxAction = sx126x_ns.class_("SetModeTxAction", automation.Action)
 SetModeRxAction = sx126x_ns.class_("SetModeRxAction", automation.Action)
+SetModeSleepAction = sx126x_ns.class_("SetModeSleepAction", automation.Action)
 SetModeStandbyAction = sx126x_ns.class_("SetModeStandbyAction", automation.Action)
 
 
@@ -259,7 +261,7 @@ async def to_code(config):
     cg.add(var.set_tcxo_delay(config[CONF_TCXO_DELAY]))
 
 
-SET_MODE_ACTION_SCHEMA = automation.maybe_simple_id(
+NO_ARGS_ACTION_SCHEMA = automation.maybe_simple_id(
     {
         cv.GenerateID(): cv.use_id(SX126x),
     }
@@ -267,15 +269,21 @@ SET_MODE_ACTION_SCHEMA = automation.maybe_simple_id(
 
 
 @automation.register_action(
-    "sx126x.set_mode_tx", SetModeTxAction, SET_MODE_ACTION_SCHEMA
+    "sx126x.run_image_cal", RunImageCalAction, NO_ARGS_ACTION_SCHEMA
 )
 @automation.register_action(
-    "sx126x.set_mode_rx", SetModeRxAction, SET_MODE_ACTION_SCHEMA
+    "sx126x.set_mode_tx", SetModeTxAction, NO_ARGS_ACTION_SCHEMA
 )
 @automation.register_action(
-    "sx126x.set_mode_standby", SetModeStandbyAction, SET_MODE_ACTION_SCHEMA
+    "sx126x.set_mode_rx", SetModeRxAction, NO_ARGS_ACTION_SCHEMA
 )
-async def set_mode_action_to_code(config, action_id, template_arg, args):
+@automation.register_action(
+    "sx126x.set_mode_sleep", SetModeSleepAction, NO_ARGS_ACTION_SCHEMA
+)
+@automation.register_action(
+    "sx126x.set_mode_standby", SetModeStandbyAction, NO_ARGS_ACTION_SCHEMA
+)
+async def no_args_action_to_code(config, action_id, template_arg, args):
     paren = await cg.get_variable(config[CONF_ID])
     var = cg.new_Pvariable(action_id, template_arg, paren)
     return var

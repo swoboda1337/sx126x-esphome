@@ -421,6 +421,12 @@ void SX126x::set_mode_tx() {
   this->write_opcode_(RADIO_SET_TX, buf, 3);
 }
 
+void SX126x::set_mode_sleep() {
+  uint8_t buf[1];
+  buf[0] = 0x05;
+  this->write_opcode_(RADIO_SET_SLEEP, buf, 1);
+}
+
 void SX126x::set_mode_standby(SX126xStandbyMode mode) {
   uint8_t buf[1];
   buf[0] = mode;
