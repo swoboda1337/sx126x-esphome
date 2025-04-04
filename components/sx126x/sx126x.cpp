@@ -33,8 +33,8 @@ uint8_t SX126x::read_fifo_(uint8_t offset, std::vector<uint8_t> &packet) {
   this->transfer_byte(RADIO_READ_BUFFER);
   this->transfer_byte(offset);
   uint8_t status = this->transfer_byte(0x00);
-  for (int i = 0; i < packet.size(); i++) {
-    packet[i] = this->transfer_byte(0x00);
+  for (uint8_t &byte : packet) {
+    byte = this->transfer_byte(0x00);
   }
   this->disable();
   this->wait_busy_();
@@ -46,8 +46,8 @@ void SX126x::write_fifo_(uint8_t offset, const std::vector<uint8_t> &packet) {
   this->enable();
   this->transfer_byte(RADIO_WRITE_BUFFER);
   this->transfer_byte(offset);
-  for (int i = 0; i < packet.size(); i++) {
-    this->transfer_byte(packet[i]);
+  for (const uint8_t &byte : packet) {
+    this->transfer_byte(byte);
   }
   this->disable();
   this->wait_busy_();
@@ -58,7 +58,7 @@ uint8_t SX126x::read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
   this->enable();
   this->transfer_byte(opcode);
   uint8_t status = this->transfer_byte(0x00);
-  for (int i = 0; i < size; i++) {
+  for (int32_t i = 0; i < size; i++) {
     data[i] = this->transfer_byte(0x00);
   }
   this->disable();
@@ -70,7 +70,7 @@ void SX126x::write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
   this->wait_busy_();
   this->enable();
   this->transfer_byte(opcode);
-  for (int i = 0; i < size; i++) {
+  for (int32_t i = 0; i < size; i++) {
     this->transfer_byte(data[i]);
   }
   this->disable();
@@ -84,7 +84,7 @@ void SX126x::read_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
   this->write_byte(0x00);
-  for (int i = 0; i < size; i++) {
+  for (int32_t i = 0; i < size; i++) {
     data[i] = this->transfer_byte(0x00);
   }
   this->disable();
@@ -97,7 +97,7 @@ void SX126x::write_register_(uint16_t reg, uint8_t *data, uint8_t size) {
   this->write_byte(RADIO_WRITE_REGISTER);
   this->write_byte((reg >> 8) & 0xFF);
   this->write_byte((reg >> 0) & 0xFF);
-  for (int i = 0; i < size; i++) {
+  for (int32_t i = 0; i < size; i++) {
     this->transfer_byte(data[i]);
   }
   this->disable();
@@ -120,7 +120,6 @@ void SX126x::setup() {
 }
 
 void SX126x::configure() {
-  uint8_t status;
   uint8_t buf[8];
 
   // toggle chip reset
@@ -239,7 +238,7 @@ void SX126x::configure() {
 
     // set packet params and sync word
     this->set_packet_params_(this->payload_length_);
-    if (this->sync_value_.size() > 0) {
+    if (!this->sync_value_.empty()) {
       for (uint32_t i = 0; i < this->sync_value_.size(); i++) {
         uint8_t data = this->sync_value_[i];
         this->write_register_(REG_GFSK_SYNCWORD + i, &data, 1);

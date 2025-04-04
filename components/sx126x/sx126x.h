@@ -97,7 +97,7 @@ class SX126x : public Component,
   void configure_lora_();
   void set_packet_params_(uint8_t payload_length);
   uint8_t read_fifo_(uint8_t offset, std::vector<uint8_t> &packet);
-  void write_fifo_(uint8_t opcode, const std::vector<uint8_t> &packet);
+  void write_fifo_(uint8_t offset, const std::vector<uint8_t> &packet);
   void write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   uint8_t read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size);
   void write_register_(uint16_t reg, uint8_t *data, uint8_t size);
