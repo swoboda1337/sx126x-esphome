@@ -73,7 +73,7 @@ class SX126x : public Component,
   void set_mode_standby(SX126xStandbyMode mode);
   void set_mode_sleep();
   void set_modulation(uint8_t modulation) { this->modulation_ = modulation; }
-  void set_pa_power(uint8_t power) { this->pa_power_ = power; }
+  void set_pa_power(int8_t power) { this->pa_power_ = power; }
   void set_pa_ramp(uint8_t ramp) { this->pa_ramp_ = ramp; }
   void set_payload_length(uint8_t payload_length) { this->payload_length_ = payload_length; }
   void set_preamble_detect(uint16_t preamble_detect) { this->preamble_detect_ = preamble_detect; }
@@ -124,10 +124,10 @@ class SX126x : public Component,
   uint8_t tcxo_voltage_;
   uint8_t coding_rate_;
   uint8_t modulation_;
-  uint8_t pa_power_;
   uint8_t pa_ramp_;
   uint8_t shaping_;
   uint8_t spreading_factor_;
+  int8_t pa_power_;
   bool crc_enable_;
   bool rx_start_;
   bool rf_switch_;

@@ -451,7 +451,7 @@ void SX126x::dump_config() {
   LOG_PIN("  DIO1 Pin: ", this->dio1_pin_);
   ESP_LOGCONFIG(TAG, "  Frequency: %" PRIu32 " Hz", this->frequency_);
   ESP_LOGCONFIG(TAG, "  Bandwidth: %" PRIu32 " Hz", BW_HZ[this->bandwidth_]);
-  ESP_LOGCONFIG(TAG, "  PA Power: %" PRIu32 " dBm", this->pa_power_);
+  ESP_LOGCONFIG(TAG, "  PA Power: %" PRId8 " dBm", this->pa_power_);
   ESP_LOGCONFIG(TAG, "  PA Ramp: %" PRIu16 " us", RAMP[this->pa_ramp_]);
   if (this->modulation_ == PACKET_TYPE_GFSK) {
     ESP_LOGCONFIG(TAG, "  Modulation: %s", "FSK");

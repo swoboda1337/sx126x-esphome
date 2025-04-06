@@ -158,8 +158,6 @@ def validate_config(config):
             raise cv.Invalid(
                 f"Bandwidth {config[CONF_BANDWIDTH]} is not available with LORA"
             )
-        if CONF_DIO1_PIN not in config:
-            raise cv.Invalid("Cannot use LoRa without dio1_pin")
         if config[CONF_PREAMBLE_SIZE] > 0 and config[CONF_PREAMBLE_SIZE] < 6:
             raise cv.Invalid("Minimum preamble size is 6 with LORA")
         if config[CONF_SPREADING_FACTOR] == 6 and config[CONF_PAYLOAD_LENGTH] == 0:
@@ -169,8 +167,6 @@ def validate_config(config):
             raise cv.Invalid(
                 f"Bandwidth {config[CONF_BANDWIDTH]} is not available with FSK"
             )
-        if config[CONF_PAYLOAD_LENGTH] > 64:
-            raise cv.Invalid("Payload length must be <= 64 with FSK")
         if config[CONF_PREAMBLE_DETECT] > len(config[CONF_SYNC_VALUE]):
             raise cv.Invalid("Preamble detection length must be <= sync value length")
     return config
@@ -193,7 +189,7 @@ CONFIG_SCHEMA = cv.All(
             ),
             cv.Required(CONF_MODULATION): cv.enum(MOD),
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
-            cv.Optional(CONF_PA_POWER, default=17): cv.int_range(min=0, max=17),
+            cv.Optional(CONF_PA_POWER, default=17): cv.int_range(min=-3, max=22),
             cv.Optional(CONF_PA_RAMP, default="40us"): cv.enum(RAMP),
             cv.Optional(CONF_PAYLOAD_LENGTH, default=0): cv.int_range(min=0, max=256),
             cv.Optional(CONF_PREAMBLE_DETECT, default=2): cv.int_range(min=0, max=4),
