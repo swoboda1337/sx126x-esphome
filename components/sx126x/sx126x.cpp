@@ -246,11 +246,11 @@ void SX126x::configure() {
     }
   }
 
-  // switch to rx or standby
+  // switch to rx or sleep
   if (this->rx_start_) {
     this->set_mode_rx();
   } else {
-    this->set_mode_standby(STDBY_XOSC);
+    this->set_mode_sleep();
   }
 }
 
@@ -308,7 +308,7 @@ void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
   if (this->rx_start_) {
     this->set_mode_rx();
   } else {
-    this->set_mode_standby(STDBY_XOSC);
+    this->set_mode_sleep();
   }
 }
 
