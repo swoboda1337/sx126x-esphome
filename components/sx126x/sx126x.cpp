@@ -326,6 +326,7 @@ void SX126x::loop() {
     uint8_t rssi;
     int8_t snr;
     this->read_opcode_(RADIO_GET_IRQSTATUS, buf, 2);
+    this->write_opcode_(RADIO_CLR_IRQSTATUS, buf, 2);
     status = (buf[0] << 8) | buf[1];
     if ((status & IRQ_RX_DONE) == IRQ_RX_DONE) {
       if ((status & IRQ_CRC_ERROR) != IRQ_CRC_ERROR) {
@@ -343,9 +344,6 @@ void SX126x::loop() {
         this->call_listeners_(packet, (float) rssi / -2.0f, (float) snr / 4.0f);
       }
     }
-    buf[0] = (status >> 8) & 0xFF;
-    buf[1] = (status >> 0) & 0xFF;
-    this->write_opcode_(RADIO_CLR_IRQSTATUS, buf, 2);
   }
 }
 
