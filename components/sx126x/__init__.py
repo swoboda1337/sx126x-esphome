@@ -9,6 +9,8 @@ MULTI_CONF = True
 CODEOWNERS = ["@swoboda1337"]
 DEPENDENCIES = ["spi"]
 
+CONF_SX126X_ID = "sx126x_id"
+
 CONF_BANDWIDTH = "bandwidth"
 CONF_BITRATE = "bitrate"
 CONF_CODING_RATE = "coding_rate"
@@ -34,6 +36,7 @@ CONF_TCXO_DELAY = "tcxo_delay"
 
 sx126x_ns = cg.esphome_ns.namespace("sx126x")
 SX126x = sx126x_ns.class_("SX126x", cg.Component, spi.SPIDevice)
+SX126xListener = sx126x_ns.class_("SX126xListener")
 SX126xBw = sx126x_ns.enum("SX126xBw")
 SX126xPacketType = sx126x_ns.enum("SX126xPacketType")
 SX126xTcxoCtrl = sx126x_ns.enum("SX126xTcxoCtrl")

@@ -254,6 +254,13 @@ void SX126x::configure() {
   }
 }
 
+size_t SX126x::get_max_packet_size() {
+  if (this->payload_length_ > 0) {
+    return this->payload_length_;
+  }
+  return 256;
+}
+
 void SX126x::set_packet_params_(uint8_t payload_length) {
   uint8_t buf[9];
   if (this->modulation_ == PACKET_TYPE_LORA) {
@@ -284,7 +291,7 @@ void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
     ESP_LOGE(TAG, "Packet size does not match payload length");
     return;
   }
-  if (packet.empty() || packet.size() > 256) {
+  if (packet.empty() || packet.size() > this->get_max_packet_size()) {
     ESP_LOGE(TAG, "Packet size out of range");
     return;
   }
