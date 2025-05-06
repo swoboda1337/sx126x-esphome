@@ -15,9 +15,9 @@ class SX126xTransport : public packet_transport::PacketTransport, public Parente
   float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
 
  protected:
-  void send_packet(std::vector<uint8_t> &buf) const override;
   size_t get_max_packet_size() override { return this->parent_->get_max_packet_size(); }
-  bool should_send() { return true; }
+  void send_packet(std::vector<uint8_t> &buf) const override;
+  bool should_send() override { return true; }
 };
 
 }  // namespace sx126x
