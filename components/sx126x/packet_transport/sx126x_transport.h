@@ -16,7 +16,7 @@ class SX126xTransport : public packet_transport::PacketTransport, public Parente
 
  protected:
   size_t get_max_packet_size() override { return this->parent_->get_max_packet_size(); }
-  void send_packet(std::vector<uint8_t> &buf) const override;
+  void send_packet(const std::vector<uint8_t> &buf) const override;
   bool should_send() override { return true; }
 };
 
