@@ -188,7 +188,7 @@ CONFIG_SCHEMA = (
             cv.Required(CONF_DIO1_PIN): pins.internal_gpio_input_pin_schema,
             cv.Required(CONF_FREQUENCY): cv.int_range(min=137000000, max=1020000000),
             cv.Required(CONF_HW_VERSION): cv.one_of(
-                "sx1261", "sx1262", "sx1268", lower=True
+                "sx1261", "sx1262", "sx1268", "llcc68", lower=True
             ),
             cv.Required(CONF_MODULATION): cv.enum(MOD),
             cv.Optional(CONF_ON_PACKET): automation.validate_automation(single=True),
