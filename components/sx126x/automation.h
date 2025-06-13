@@ -7,14 +7,9 @@
 namespace esphome {
 namespace sx126x {
 
-template<typename... Ts> class RunImageCalAction : public Action<Ts...> {
+template<typename... Ts> class RunImageCalAction : public Action<Ts...>, public Parented<SX126x> {
  public:
-  RunImageCalAction(SX126x *sx126x) : sx126x_(sx126x) {}
-
-  void play(Ts... x) override { this->sx126x_->run_image_cal(); }
-
- protected:
-  SX126x *sx126x_;
+  void play(Ts... x) override { this->parent_->run_image_cal(); }
 };
 
 template<typename... Ts> class SendPacketAction : public Action<Ts...>, public Parented<SX126x> {
@@ -23,6 +18,7 @@ template<typename... Ts> class SendPacketAction : public Action<Ts...>, public P
     this->data_func_ = func;
     this->static_ = false;
   }
+
   void set_data_static(const std::vector<uint8_t> &data) {
     this->data_static_ = data;
     this->static_ = true;
@@ -42,44 +38,24 @@ template<typename... Ts> class SendPacketAction : public Action<Ts...>, public P
   std::vector<uint8_t> data_static_{};
 };
 
-template<typename... Ts> class SetModeTxAction : public Action<Ts...> {
+template<typename... Ts> class SetModeTxAction : public Action<Ts...>, public Parented<SX126x> {
  public:
-  SetModeTxAction(SX126x *sx126x) : sx126x_(sx126x) {}
-
-  void play(Ts... x) override { this->sx126x_->set_mode_tx(); }
-
- protected:
-  SX126x *sx126x_;
+  void play(Ts... x) override { this->parent_->set_mode_tx(); }
 };
 
-template<typename... Ts> class SetModeRxAction : public Action<Ts...> {
+template<typename... Ts> class SetModeRxAction : public Action<Ts...>, public Parented<SX126x> {
  public:
-  SetModeRxAction(SX126x *sx126x) : sx126x_(sx126x) {}
-
-  void play(Ts... x) override { this->sx126x_->set_mode_rx(); }
-
- protected:
-  SX126x *sx126x_;
+  void play(Ts... x) override { this->parent_->set_mode_rx(); }
 };
 
-template<typename... Ts> class SetModeSleepAction : public Action<Ts...> {
+template<typename... Ts> class SetModeSleepAction : public Action<Ts...>, public Parented<SX126x> {
  public:
-  SetModeSleepAction(SX126x *sx126x) : sx126x_(sx126x) {}
-
-  void play(Ts... x) override { this->sx126x_->set_mode_sleep(); }
-
- protected:
-  SX126x *sx126x_;
+  void play(Ts... x) override { this->parent_->set_mode_sleep(); }
 };
 
-template<typename... Ts> class SetModeStandbyAction : public Action<Ts...> {
+template<typename... Ts> class SetModeStandbyAction : public Action<Ts...>, public Parented<SX126x> {
  public:
-  SetModeStandbyAction(SX126x *sx126x) : sx126x_(sx126x) {}
-
-  void play(Ts... x) override { this->sx126x_->set_mode_standby(STDBY_XOSC); }
-
- protected:
-  SX126x *sx126x_;
+  void play(Ts... x) override { this->parent_->set_mode_standby(STDBY_XOSC); }
 };
 
 }  // namespace sx126x
