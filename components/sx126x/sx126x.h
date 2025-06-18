@@ -48,7 +48,7 @@ enum SX126xBw : uint8_t {
 
 class SX126xListener {
  public:
-  virtual void on_packet(const std::vector<uint8_t> &packet, float rssi, float snr);
+  virtual void on_packet(const std::vector<uint8_t> &packet, float rssi, float snr) = 0;
 };
 
 class SX126x : public Component,
