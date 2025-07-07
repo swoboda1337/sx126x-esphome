@@ -17,15 +17,18 @@ static const uint8_t BW_FSK[21] = {
     FSK_BW_23400,  FSK_BW_29300,  FSK_BW_39000,  FSK_BW_46900,  FSK_BW_58600,  FSK_BW_78200,  FSK_BW_93800,
     FSK_BW_117300, FSK_BW_156200, FSK_BW_187200, FSK_BW_234300, FSK_BW_312000, FSK_BW_373600, FSK_BW_467000};
 
-uint8_t SX126x::wakeup_() {
-  this->wait_busy_();
-  this->enable();
-  this->transfer_byte(RADIO_GET_STATUS);
-  uint8_t status = this->transfer_byte(0x00);
-  this->disable();
-  this->wait_busy_();
-  return status;
-}
+static constexpr uint32_t RESET_DELAY_HIGH_US = 5000;
+static constexpr uint32_t RESET_DELAY_LOW_US = 2000;
+static constexpr uint32_t SWITCHING_DELAY_US = 1;
+static constexpr uint32_t TRANSMIT_TIMEOUT_MS = 4000;
+static constexpr uint32_t BUSY_TIMEOUT_MS = 20;
+
+// OCP (Over Current Protection) values
+static constexpr uint8_t OCP_80MA = 0x18;   // 80 mA max current
+static constexpr uint8_t OCP_140MA = 0x38;  // 140 mA max current
+
+// LoRa low data rate optimization threshold
+static constexpr float LOW_DATA_RATE_OPTIMIZE_THRESHOLD = 16.38f;  // 16.38 ms
 
 uint8_t SX126x::read_fifo_(uint8_t offset, std::vector<uint8_t> &packet) {
   this->wait_busy_();
@@ -37,7 +40,6 @@ uint8_t SX126x::read_fifo_(uint8_t offset, std::vector<uint8_t> &packet) {
     byte = this->transfer_byte(0x00);
   }
   this->disable();
-  this->wait_busy_();
   return status;
 }
 
@@ -50,7 +52,7 @@ void SX126x::write_fifo_(uint8_t offset, const std::vector<uint8_t> &packet) {
     this->transfer_byte(byte);
   }
   this->disable();
-  this->wait_busy_();
+  delayMicroseconds(SWITCHING_DELAY_US);
 }
 
 uint8_t SX126x::read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
@@ -62,7 +64,6 @@ uint8_t SX126x::read_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
     data[i] = this->transfer_byte(0x00);
   }
   this->disable();
-  this->wait_busy_();
   return status;
 }
 
@@ -74,7 +75,7 @@ void SX126x::write_opcode_(uint8_t opcode, uint8_t *data, uint8_t size) {
     this->transfer_byte(data[i]);
   }
   this->disable();
-  this->wait_busy_();
+  delayMicroseconds(SWITCHING_DELAY_US);
 }
 
 void SX126x::read_register_(uint16_t reg, uint8_t *data, uint8_t size) {
@@ -88,7 +89,6 @@ void SX126x::read_register_(uint16_t reg, uint8_t *data, uint8_t size) {
     data[i] = this->transfer_byte(0x00);
   }
   this->disable();
-  this->wait_busy_();
 }
 
 void SX126x::write_register_(uint16_t reg, uint8_t *data, uint8_t size) {
@@ -101,7 +101,7 @@ void SX126x::write_register_(uint16_t reg, uint8_t *data, uint8_t size) {
     this->transfer_byte(data[i]);
   }
   this->disable();
-  this->wait_busy_();
+  delayMicroseconds(SWITCHING_DELAY_US);
 }
 
 void SX126x::setup() {
@@ -124,14 +124,14 @@ void SX126x::configure() {
 
   // toggle chip reset
   this->rst_pin_->digital_write(true);
-  delayMicroseconds(5000);
+  delayMicroseconds(RESET_DELAY_HIGH_US);
   this->rst_pin_->digital_write(false);
-  delayMicroseconds(2000);
+  delayMicroseconds(RESET_DELAY_LOW_US);
   this->rst_pin_->digital_write(true);
-  delayMicroseconds(5000);
+  delayMicroseconds(RESET_DELAY_HIGH_US);
 
   // wakeup
-  this->wakeup_();
+  this->read_opcode_(RADIO_GET_STATUS, nullptr, 0);
 
   // config tcxo
   if (this->tcxo_voltage_ != TCXO_CTRL_NONE) {
@@ -181,6 +181,8 @@ void SX126x::configure() {
   // configure pa
   int8_t pa_power = this->pa_power_;
   if (this->hw_version_ == "sx1261") {
+    // the following values were taken from section 13.1.14.1 table 13-21
+    // in rev 2.1 of the datasheet
     if (pa_power == 15) {
       uint8_t cfg[4] = {0x06, 0x00, 0x01, 0x01};
       this->write_opcode_(RADIO_SET_PACONFIG, cfg, 4);
@@ -190,14 +192,16 @@ void SX126x::configure() {
     }
     pa_power = std::max(pa_power, (int8_t) -3);
     pa_power = std::min(pa_power, (int8_t) 14);
-    buf[0] = 0x18;  // max 80 mA
+    buf[0] = OCP_80MA;
     this->write_register_(REG_OCP, buf, 1);
   } else {
+    // the following values were taken from section 13.1.14.1 table 13-21
+    // in rev 2.1 of the datasheet
     uint8_t cfg[4] = {0x04, 0x07, 0x00, 0x01};
     this->write_opcode_(RADIO_SET_PACONFIG, cfg, 4);
     pa_power = std::max(pa_power, (int8_t) -3);
     pa_power = std::min(pa_power, (int8_t) 22);
-    buf[0] = 0x38;  // max 140 mA
+    buf[0] = OCP_140MA;
     this->write_register_(REG_OCP, buf, 1);
   }
   buf[0] = pa_power;
@@ -211,16 +215,13 @@ void SX126x::configure() {
     buf[0] = this->spreading_factor_;
     buf[1] = BW_LORA[this->bandwidth_ - SX126X_BW_7810];
     buf[2] = this->coding_rate_;
-    buf[3] = (duration > 16.38f) ? 0x01 : 0x00;
+    buf[3] = (duration > LOW_DATA_RATE_OPTIMIZE_THRESHOLD) ? 0x01 : 0x00;
     this->write_opcode_(RADIO_SET_MODULATIONPARAMS, buf, 4);
 
     // set packet params and sync word
     this->set_packet_params_(this->payload_length_);
     if (this->sync_value_.size() == 2) {
-      for (uint32_t i = 0; i < this->sync_value_.size(); i++) {
-        uint8_t data = this->sync_value_[i];
-        this->write_register_(REG_LORA_SYNCWORD + i, &data, 1);
-      }
+      this->write_register_(REG_LORA_SYNCWORD, this->sync_value_.data(), this->sync_value_.size());
     }
   } else {
     // set modulation params
@@ -239,10 +240,7 @@ void SX126x::configure() {
     // set packet params and sync word
     this->set_packet_params_(this->payload_length_);
     if (!this->sync_value_.empty()) {
-      for (uint32_t i = 0; i < this->sync_value_.size(); i++) {
-        uint8_t data = this->sync_value_[i];
-        this->write_register_(REG_GFSK_SYNCWORD + i, &data, 1);
-      }
+      this->write_register_(REG_GFSK_SYNCWORD, this->sync_value_.data(), this->sync_value_.size());
     }
   }
 
@@ -258,7 +256,7 @@ size_t SX126x::get_max_packet_size() {
   if (this->payload_length_ > 0) {
     return this->payload_length_;
   }
-  return 256;
+  return 255;
 }
 
 void SX126x::set_packet_params_(uint8_t payload_length) {
@@ -286,28 +284,34 @@ void SX126x::set_packet_params_(uint8_t payload_length) {
   }
 }
 
-void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
+SX126xError SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
   if (this->payload_length_ > 0 && this->payload_length_ != packet.size()) {
     ESP_LOGE(TAG, "Packet size does not match config");
-    return;
+    return SX126xError::INVALID_PARAMS;
   }
   if (packet.empty() || packet.size() > this->get_max_packet_size()) {
     ESP_LOGE(TAG, "Packet size out of range");
-    return;
+    return SX126xError::INVALID_PARAMS;
   }
+
+  SX126xError ret = SX126xError::NONE;
   this->set_mode_standby(STDBY_XOSC);
   if (this->payload_length_ == 0) {
     this->set_packet_params_(packet.size());
   }
   this->write_fifo_(0x00, packet);
   this->set_mode_tx();
+
+  // wait until transmit completes, typically the delay will be less than 100 ms
   uint32_t start = millis();
   while (!this->dio1_pin_->digital_read()) {
-    if (millis() - start > 4000) {
+    if (millis() - start > TRANSMIT_TIMEOUT_MS) {
       ESP_LOGE(TAG, "Transmit packet failure");
+      ret = SX126xError::TIMEOUT;
       break;
     }
   }
+
   uint8_t buf[2];
   buf[0] = 0xFF;
   buf[1] = 0xFF;
@@ -317,6 +321,7 @@ void SX126x::transmit_packet(const std::vector<uint8_t> &packet) {
   } else {
     this->set_mode_sleep();
   }
+  return ret;
 }
 
 void SX126x::call_listeners_(const std::vector<uint8_t> &packet, float rssi, float snr) {
@@ -327,34 +332,38 @@ void SX126x::call_listeners_(const std::vector<uint8_t> &packet, float rssi, flo
 }
 
 void SX126x::loop() {
-  if (this->dio1_pin_->digital_read()) {
-    uint16_t status;
-    uint8_t buf[3];
-    uint8_t rssi;
-    int8_t snr;
-    this->read_opcode_(RADIO_GET_IRQSTATUS, buf, 2);
-    this->write_opcode_(RADIO_CLR_IRQSTATUS, buf, 2);
-    status = (buf[0] << 8) | buf[1];
-    if ((status & IRQ_RX_DONE) == IRQ_RX_DONE) {
-      if ((status & IRQ_CRC_ERROR) != IRQ_CRC_ERROR) {
-        this->read_opcode_(RADIO_GET_PACKETSTATUS, buf, 3);
-        if (this->modulation_ == PACKET_TYPE_LORA) {
-          rssi = buf[0];
-          snr = buf[1];
-        } else {
-          rssi = buf[2];
-          snr = 0;
-        }
-        this->read_opcode_(RADIO_GET_RXBUFFERSTATUS, buf, 2);
-        std::vector<uint8_t> packet(buf[0]);
-        this->read_fifo_(buf[1], packet);
-        this->call_listeners_(packet, (float) rssi / -2.0f, (float) snr / 4.0f);
+  if (!this->dio1_pin_->digital_read()) {
+    return;
+  }
+
+  uint16_t status;
+  uint8_t buf[3];
+  uint8_t rssi;
+  int8_t snr;
+  this->read_opcode_(RADIO_GET_IRQSTATUS, buf, 2);
+  this->write_opcode_(RADIO_CLR_IRQSTATUS, buf, 2);
+  status = (buf[0] << 8) | buf[1];
+  if ((status & IRQ_RX_DONE) == IRQ_RX_DONE) {
+    if ((status & IRQ_CRC_ERROR) != IRQ_CRC_ERROR) {
+      this->read_opcode_(RADIO_GET_PACKETSTATUS, buf, 3);
+      if (this->modulation_ == PACKET_TYPE_LORA) {
+        rssi = buf[0];
+        snr = buf[1];
+      } else {
+        rssi = buf[2];
+        snr = 0;
       }
+      this->read_opcode_(RADIO_GET_RXBUFFERSTATUS, buf, 2);
+      this->packet_.resize(buf[0]);
+      this->read_fifo_(buf[1], this->packet_);
+      this->call_listeners_(this->packet_, (float) rssi / -2.0f, (float) snr / 4.0f);
     }
   }
 }
 
 void SX126x::run_image_cal() {
+  // the following values were taken from section 9.2.1 table 9-2
+  // in rev 2.1 of the datasheet
   uint8_t buf[2] = {0, 0};
   if (this->frequency_ > 900000000) {
     buf[0] = 0xE1;
@@ -438,10 +447,13 @@ void SX126x::set_mode_standby(SX126xStandbyMode mode) {
 }
 
 void SX126x::wait_busy_() {
+  // wait if the device is busy, the maximum delay is only be a few ms
+  // with most commands taking only a few us
   uint32_t start = millis();
   while (this->busy_pin_->digital_read()) {
-    if (millis() - start > 1000) {
-      ESP_LOGE(TAG, "Wait busy timout");
+    if (millis() - start > BUSY_TIMEOUT_MS) {
+      ESP_LOGE(TAG, "Wait busy timeout");
+      this->mark_failed();
       break;
     }
   }
@@ -449,52 +461,59 @@ void SX126x::wait_busy_() {
 
 void SX126x::dump_config() {
   ESP_LOGCONFIG(TAG, "SX126x:");
-  ESP_LOGCONFIG(TAG, "  HW Version: %15s", this->version_);
   LOG_PIN("  CS Pin: ", this->cs_);
   LOG_PIN("  BUSY Pin: ", this->busy_pin_);
   LOG_PIN("  RST Pin: ", this->rst_pin_);
   LOG_PIN("  DIO1 Pin: ", this->dio1_pin_);
-  ESP_LOGCONFIG(TAG, "  Frequency: %" PRIu32 " Hz", this->frequency_);
-  ESP_LOGCONFIG(TAG, "  Bandwidth: %" PRIu32 " Hz", BW_HZ[this->bandwidth_]);
-  ESP_LOGCONFIG(TAG, "  PA Power: %" PRId8 " dBm", this->pa_power_);
-  ESP_LOGCONFIG(TAG, "  PA Ramp: %" PRIu16 " us", RAMP[this->pa_ramp_]);
+  ESP_LOGCONFIG(TAG,
+                "  HW Version: %15s\n"
+                "  Frequency: %" PRIu32 " Hz\n"
+                "  Bandwidth: %" PRIu32 " Hz\n"
+                "  PA Power: %" PRId8 " dBm\n"
+                "  PA Ramp: %" PRIu16 " us\n"
+                "  Payload Length: %" PRIu32 "\n"
+                "  CRC Enable: %s\n"
+                "  Rx Start: %s",
+                this->version_, this->frequency_, BW_HZ[this->bandwidth_], this->pa_power_, RAMP[this->pa_ramp_],
+                this->payload_length_, TRUEFALSE(this->crc_enable_), TRUEFALSE(this->rx_start_));
   if (this->modulation_ == PACKET_TYPE_GFSK) {
-    ESP_LOGCONFIG(TAG, "  Modulation: %s", "FSK");
-    ESP_LOGCONFIG(TAG, "  Deviation: %" PRIu32 " Hz", this->deviation_);
+    const char *shaping = "NONE";
     if (this->shaping_ == GAUSSIAN_BT_0_3) {
-      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_3");
+      shaping = "GAUSSIAN_BT_0_3";
     } else if (this->shaping_ == GAUSSIAN_BT_0_5) {
-      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_5");
+      shaping = "GAUSSIAN_BT_0_5";
     } else if (this->shaping_ == GAUSSIAN_BT_0_7) {
-      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_0_7");
+      shaping = "GAUSSIAN_BT_0_7";
     } else if (this->shaping_ == GAUSSIAN_BT_1_0) {
-      ESP_LOGCONFIG(TAG, "  Shaping: GAUSSIAN_BT_1_0");
-    } else {
-      ESP_LOGCONFIG(TAG, "  Shaping: NONE");
+      shaping = "GAUSSIAN_BT_1_0";
     }
-    ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
-    ESP_LOGCONFIG(TAG, "  Preamble Detect: %" PRIu16, this->preamble_detect_);
-    ESP_LOGCONFIG(TAG, "  Bitrate: %" PRIu32 "b/s", this->bitrate_);
+    ESP_LOGCONFIG(TAG,
+                  "  Modulation: FSK\n"
+                  "  Deviation: %" PRIu32 " Hz\n"
+                  "  Shaping: %s\n"
+                  "  Preamble Size: %" PRIu16 "\n"
+                  "  Preamble Detect: %" PRIu16 "\n"
+                  "  Bitrate: %" PRIu32 "b/s",
+                  this->deviation_, shaping, this->preamble_size_, this->preamble_detect_, this->bitrate_);
   } else if (this->modulation_ == PACKET_TYPE_LORA) {
-    ESP_LOGCONFIG(TAG, "  Modulation: %s", "LORA");
-    ESP_LOGCONFIG(TAG, "  Spreading Factor: %" PRIu8, this->spreading_factor_);
+    const char *cr = "4/8";
     if (this->coding_rate_ == LORA_CR_4_5) {
-      ESP_LOGCONFIG(TAG, "  Coding Rate: 4/5");
+      cr = "4/5";
     } else if (this->coding_rate_ == LORA_CR_4_6) {
-      ESP_LOGCONFIG(TAG, "  Coding Rate: 4/6");
+      cr = "4/6";
     } else if (this->coding_rate_ == LORA_CR_4_7) {
-      ESP_LOGCONFIG(TAG, "  Coding Rate: 4/7");
-    } else {
-      ESP_LOGCONFIG(TAG, "  Coding Rate: 4/8");
+      cr = "4/7";
     }
-    ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu16, this->preamble_size_);
+    ESP_LOGCONFIG(TAG,
+                  "  Modulation: LORA\n"
+                  "  Spreading Factor: %" PRIu8 "\n"
+                  "  Coding Rate: %s\n"
+                  "  Preamble Size: %" PRIu16,
+                  this->spreading_factor_, cr, this->preamble_size_);
   }
   if (!this->sync_value_.empty()) {
     ESP_LOGCONFIG(TAG, "  Sync Value: 0x%s", format_hex(this->sync_value_).c_str());
   }
-  ESP_LOGCONFIG(TAG, "  Payload Length: %" PRIu32, this->payload_length_);
-  ESP_LOGCONFIG(TAG, "  CRC Enable: %s", TRUEFALSE(this->crc_enable_));
-  ESP_LOGCONFIG(TAG, "  Rx Start: %s", TRUEFALSE(this->rx_start_));
   if (this->is_failed()) {
     ESP_LOGE(TAG, "Configuring SX126x failed");
   }

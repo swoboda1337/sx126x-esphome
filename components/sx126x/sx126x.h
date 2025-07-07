@@ -46,6 +46,8 @@ enum SX126xBw : uint8_t {
   SX126X_BW_500000,
 };
 
+enum class SX126xError { NONE = 0, TIMEOUT, INVALID_PARAMS };
+
 class SX126xListener {
  public:
   virtual void on_packet(const std::vector<uint8_t> &packet, float rssi, float snr) = 0;
@@ -89,7 +91,7 @@ class SX126x : public Component,
   void set_tcxo_delay(uint32_t tcxo_delay) { this->tcxo_delay_ = tcxo_delay; }
   void run_image_cal();
   void configure();
-  void transmit_packet(const std::vector<uint8_t> &packet);
+  SX126xError transmit_packet(const std::vector<uint8_t> &packet);
   void register_listener(SX126xListener *listener) { this->listeners_.push_back(listener); }
   Trigger<std::vector<uint8_t>, float, float> *get_packet_trigger() const { return this->packet_trigger_; };
 
@@ -105,33 +107,33 @@ class SX126x : public Component,
   void read_register_(uint16_t reg, uint8_t *data, uint8_t size);
   void call_listeners_(const std::vector<uint8_t> &packet, float rssi, float snr);
   void wait_busy_();
-  uint8_t wakeup_();
   Trigger<std::vector<uint8_t>, float, float> *packet_trigger_{new Trigger<std::vector<uint8_t>, float, float>()};
   std::vector<SX126xListener *> listeners_;
+  std::vector<uint8_t> packet_;
   std::vector<uint8_t> sync_value_;
   InternalGPIOPin *busy_pin_{nullptr};
   InternalGPIOPin *dio1_pin_{nullptr};
   InternalGPIOPin *rst_pin_{nullptr};
   std::string hw_version_;
-  SX126xBw bandwidth_;
   char version_[16];
-  uint32_t bitrate_;
-  uint32_t deviation_;
-  uint32_t frequency_;
-  uint32_t payload_length_;
-  uint32_t tcxo_delay_;
-  uint16_t preamble_detect_;
-  uint16_t preamble_size_;
-  uint8_t tcxo_voltage_;
-  uint8_t coding_rate_;
-  uint8_t modulation_;
-  uint8_t pa_ramp_;
-  uint8_t shaping_;
-  uint8_t spreading_factor_;
-  int8_t pa_power_;
-  bool crc_enable_;
-  bool rx_start_;
-  bool rf_switch_;
+  SX126xBw bandwidth_{SX126X_BW_125000};
+  uint32_t bitrate_{0};
+  uint32_t deviation_{0};
+  uint32_t frequency_{0};
+  uint32_t payload_length_{0};
+  uint32_t tcxo_delay_{0};
+  uint16_t preamble_detect_{0};
+  uint16_t preamble_size_{0};
+  uint8_t tcxo_voltage_{0};
+  uint8_t coding_rate_{0};
+  uint8_t modulation_{PACKET_TYPE_LORA};
+  uint8_t pa_ramp_{0};
+  uint8_t shaping_{0};
+  uint8_t spreading_factor_{0};
+  int8_t pa_power_{0};
+  bool crc_enable_{false};
+  bool rx_start_{false};
+  bool rf_switch_{false};
 };
 
 }  // namespace sx126x

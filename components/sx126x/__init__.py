@@ -144,8 +144,6 @@ SetModeStandbyAction = sx126x_ns.class_(
 def validate_raw_data(value):
     if isinstance(value, str):
         return value.encode("utf-8")
-    if isinstance(value, str):
-        return value
     if isinstance(value, list):
         return cv.Schema([cv.hex_uint8_t])(value)
     raise cv.Invalid(
@@ -168,18 +166,14 @@ def validate_config(config):
     ]
     if config[CONF_MODULATION] == "LORA":
         if config[CONF_BANDWIDTH] not in lora_bws:
-            raise cv.Invalid(
-                f"Bandwidth {config[CONF_BANDWIDTH]} is not available with LORA"
-            )
+            raise cv.Invalid(f"{config[CONF_BANDWIDTH]} is not available with LORA")
         if config[CONF_PREAMBLE_SIZE] > 0 and config[CONF_PREAMBLE_SIZE] < 6:
             raise cv.Invalid("Minimum preamble size is 6 with LORA")
         if config[CONF_SPREADING_FACTOR] == 6 and config[CONF_PAYLOAD_LENGTH] == 0:
             raise cv.Invalid("Payload length must be set when spreading factor is 6")
     else:
         if config[CONF_BANDWIDTH] in lora_bws:
-            raise cv.Invalid(
-                f"Bandwidth {config[CONF_BANDWIDTH]} is not available with FSK"
-            )
+            raise cv.Invalid(f"{config[CONF_BANDWIDTH]} is not available with FSK")
         if config[CONF_PREAMBLE_DETECT] > len(config[CONF_SYNC_VALUE]):
             raise cv.Invalid("Preamble detection length must be <= sync value length")
     return config
